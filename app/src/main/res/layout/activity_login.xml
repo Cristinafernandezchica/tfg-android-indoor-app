@@ -27,6 +27,16 @@
         android:layout_marginTop="24dp" />
 
     <TextView
+        android:id="@+id/tvLoginError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="14sp"
+        android:visibility="gone"
+        android:paddingTop="8dp"
+        android:text="Error de login" />
+
+    <TextView
         android:id="@+id/tvStatus"
         android:text=""
         android:layout_width="match_parent"

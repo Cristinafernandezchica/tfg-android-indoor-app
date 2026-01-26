@@ -3,6 +3,7 @@ package com.cristina.tfg_android_indoor_app
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -27,6 +28,9 @@ class LoginActivity : AppCompatActivity() {
         etPassword = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
         tvStatus = findViewById(R.id.tvStatus)
+        val tvLoginError = findViewById<TextView>(R.id.tvLoginError)
+        tvLoginError.visibility = View.GONE
+
 
         btnLogin.setOnClickListener {
             val identifier = etIdentifier.text.toString()
@@ -44,6 +48,7 @@ class LoginActivity : AppCompatActivity() {
                 result
                     .onSuccess { token ->
                         tvStatus.text = "Login correcto"
+                        tvLoginError.visibility = View.GONE
                         saveToken(token)
                         // Aquí luego navegarás a la pantalla principal
                         val intent = Intent(this@LoginActivity, HomeActivity::class.java)
@@ -51,7 +56,9 @@ class LoginActivity : AppCompatActivity() {
                         finish() // para que no vuelva al login al pulsar atrás
                     }
                     .onFailure { e ->
-                        tvStatus.text = "Error: ${e.message}"
+                        tvStatus.text = ""
+                        tvLoginError.text = e.message?.replace("{\"error\":", "")?.replace("}", "")?.replace("\"", "")?.trim()
+                        tvLoginError.visibility = View.VISIBLE
                     }
             }
         }
@@ -62,11 +69,13 @@ class LoginActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+
+
     }
 
     private fun saveToken(token: String) {
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
-        prefs.edit().putString("jwt", token).apply()
+        prefs.edit().putString("token", token).apply()
     }
 }
 
