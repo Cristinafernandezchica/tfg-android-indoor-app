@@ -29,6 +29,8 @@ class ProfileActivity : AppCompatActivity() {
             val result = authRepository.getCurrentUser(token)
             result
                 .onSuccess { user ->
+                    val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+                    prefs.edit().putString("role", user.role).apply()
                     etName.setText(user.name)
                     etEmail.setText(user.email)
                 }

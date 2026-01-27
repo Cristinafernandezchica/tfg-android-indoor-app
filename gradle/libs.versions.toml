@@ -16,6 +16,7 @@ okhttp = "4.9.3"
 material = "1.13.0"
 materialVersion = "1.12.0"
 coroutines = "1.7.3"
+ui = "1.10.1"
 
 [libraries]
 androidx-material = { group = "com.google.android.material", name = "material", version.ref = "materialVersion" }
@@ -44,6 +45,7 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
 androidx-tools-core = { group = "androidx.privacysandbox.tools", name = "tools-core", version.ref = "toolsCore" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

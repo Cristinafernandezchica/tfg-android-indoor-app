@@ -22,6 +22,14 @@
 
     </FrameLayout>
 
+    <Button
+        android:id="@+id/btnUserList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Lista de usuarios"
+        android:visibility="gone"
+        android:layout_margin="16dp"/>
+
     <!-- Barra de navegación inferior -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"

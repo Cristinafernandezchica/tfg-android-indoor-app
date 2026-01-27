@@ -1,16 +1,21 @@
 package com.cristina.tfg_android_indoor_app.data.remote
 
+import androidx.compose.ui.graphics.vector.Path
 import com.cristina.tfg_android_indoor_app.data.model.LoginRequest
 import com.cristina.tfg_android_indoor_app.data.model.LoginResponse
 import com.cristina.tfg_android_indoor_app.data.model.RegisterRequest
 import com.cristina.tfg_android_indoor_app.data.model.UpdateUserRequest
+import com.cristina.tfg_android_indoor_app.data.model.UserListItem
 import com.cristina.tfg_android_indoor_app.data.model.UserResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface AuthApi {
 
@@ -36,6 +41,32 @@ interface AuthApi {
         @Header("Authorization") token: String
     ): Response<UserResponse>
 
+    @GET("auth/users")
+    suspend fun getUsers(
+        @Header("Authorization") token: String,
+        @Query("q") query: String
+    ): Response<List<UserListItem>>
+
+
+    @DELETE("auth/admin/delete/{id}")
+    suspend fun deleteUser(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<Unit>
+
+    @PUT("auth/admin/reset-password/{id}")
+    suspend fun resetPassword(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body body: Map<String, String>
+    ): Response<Unit>
+
+    @PUT("auth/admin/change-role/{id}")
+    suspend fun changeRole(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body body: Map<String, String>
+    ): Response<Unit>
 
 
 }

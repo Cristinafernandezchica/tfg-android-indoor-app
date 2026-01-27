@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.volley)
     implementation(libs.androidx.tools.core)
     implementation(libs.material)
+    implementation(libs.androidx.compose.ui)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
