@@ -10,12 +10,19 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cristina.tfg_android_indoor_app.R
+import com.cristina.tfg_android_indoor_app.data.model.UserListItem
 import com.cristina.tfg_android_indoor_app.data.repository.AuthRepository
 import kotlinx.coroutines.launch
 
 class UserListActivity : AppCompatActivity() {
 
     private val authRepository = AuthRepository()
+
+    // Lista mutable para poder actualizarla
+    private val users = mutableListOf<UserListItem>()
+
+    // Adapter único reutilizable
+    private lateinit var adapter: UserAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,21 +36,27 @@ class UserListActivity : AppCompatActivity() {
         val token = getSharedPreferences("auth", MODE_PRIVATE)
             .getString("token", "") ?: ""
 
+        // Inicializamos el adapter una sola vez
+        adapter = UserAdapter(
+            users,
+            onDelete = { id -> deleteUser(id, token) },
+            onResetPassword = { id -> resetPassword(id, token) },
+            onChangeRole = { id -> changeRole(id, token) }
+        )
+
+        rvUsers.adapter = adapter
+
+        // Función para cargar usuarios y refrescar la lista
         fun loadUsers(query: String = "") {
             lifecycleScope.launch {
                 val result = authRepository.getUsers(token, query)
-                result
-                    .onSuccess { users ->
-                        rvUsers.adapter = UserAdapter(
-                            users,
-                            onDelete = { id -> deleteUser(id, token) },
-                            onResetPassword = { id -> resetPassword(id, token) },
-                            onChangeRole = { id -> changeRole(id, token) }
-                        )
-                    }
-                    .onFailure {
-                        Toast.makeText(this@UserListActivity, "Error cargando usuarios", Toast.LENGTH_SHORT).show()
-                    }
+                result.onSuccess { newUsers ->
+                    users.clear()
+                    users.addAll(newUsers)
+                    adapter.notifyDataSetChanged()
+                }.onFailure {
+                    Toast.makeText(this@UserListActivity, "Error cargando usuarios", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -59,6 +72,7 @@ class UserListActivity : AppCompatActivity() {
             val result = authRepository.deleteUser(token, id)
             result.onSuccess {
                 Toast.makeText(this@UserListActivity, "Usuario eliminado", Toast.LENGTH_SHORT).show()
+                reload()
             }
         }
     }
@@ -83,6 +97,7 @@ class UserListActivity : AppCompatActivity() {
                     val result = authRepository.resetPassword(token, id, newPassword)
                     result.onSuccess {
                         Toast.makeText(this@UserListActivity, "Contraseña actualizada", Toast.LENGTH_SHORT).show()
+                        reload()
                     }.onFailure {
                         Toast.makeText(this@UserListActivity, "Error al cambiar contraseña", Toast.LENGTH_SHORT).show()
                     }
@@ -92,13 +107,38 @@ class UserListActivity : AppCompatActivity() {
             .show()
     }
 
-
     private fun changeRole(id: Int, token: String) {
+        val roles = arrayOf("user", "admin")
+
+        AlertDialog.Builder(this)
+            .setTitle("Cambiar rol")
+            .setItems(roles) { _, which ->
+                val selectedRole = roles[which]
+
+                lifecycleScope.launch {
+                    val result = authRepository.changeRole(token, id, selectedRole)
+                    result.onSuccess {
+                        Toast.makeText(this@UserListActivity, "Rol cambiado a $selectedRole", Toast.LENGTH_SHORT).show()
+                        reload()
+                    }.onFailure {
+                        Toast.makeText(this@UserListActivity, "Error al cambiar rol", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .show()
+    }
+
+    // Función auxiliar para recargar la lista
+    private fun reload() {
+        val token = getSharedPreferences("auth", MODE_PRIVATE)
+            .getString("token", "") ?: ""
+
         lifecycleScope.launch {
-            val newRole = "admin" // o "user"
-            val result = authRepository.changeRole(token, id, newRole)
-            result.onSuccess {
-                Toast.makeText(this@UserListActivity, "Rol actualizado", Toast.LENGTH_SHORT).show()
+            val result = authRepository.getUsers(token, "")
+            result.onSuccess { newUsers ->
+                users.clear()
+                users.addAll(newUsers)
+                adapter.notifyDataSetChanged()
             }
         }
     }
