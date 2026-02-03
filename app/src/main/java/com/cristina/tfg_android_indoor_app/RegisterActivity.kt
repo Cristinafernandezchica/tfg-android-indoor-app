@@ -1,5 +1,6 @@
 package com.cristina.tfg_android_indoor_app
 
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
@@ -7,6 +8,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.cristina.tfg_android_indoor_app.data.repository.AuthRepository
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 
 class RegisterActivity : AppCompatActivity() {
@@ -43,7 +45,16 @@ class RegisterActivity : AppCompatActivity() {
                         finish() // vuelve al login
                     }
                     .onFailure { e ->
-                        Toast.makeText(this@RegisterActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Snackbar.make(
+                            findViewById(android.R.id.content),
+                            e.message ?: "Error desconocido",
+                            Snackbar.LENGTH_LONG
+                        )
+                            .setBackgroundTint(Color.parseColor("#DC2626"))
+                            .setTextColor(Color.WHITE)
+                            .show()
+
+
                     }
             }
         }

@@ -1,5 +1,6 @@
 package com.cristina.tfg_android_indoor_app.ui.userlist
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.EditText
 import android.widget.Toast
@@ -9,9 +10,13 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.cristina.tfg_android_indoor_app.HomeActivity
+import com.cristina.tfg_android_indoor_app.ProfileActivity
 import com.cristina.tfg_android_indoor_app.R
+import com.cristina.tfg_android_indoor_app.SettingsActivity
 import com.cristina.tfg_android_indoor_app.data.model.UserListItem
 import com.cristina.tfg_android_indoor_app.data.repository.AuthRepository
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 
 class UserListActivity : AppCompatActivity() {
@@ -64,6 +69,26 @@ class UserListActivity : AppCompatActivity() {
 
         etSearch.addTextChangedListener {
             loadUsers(it.toString())
+        }
+
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, HomeActivity::class.java))
+                    true
+                }
+                R.id.nav_profile -> {
+                    startActivity(Intent(this, ProfileActivity::class.java))
+                    true
+                }
+                R.id.nav_settings -> {
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                    true
+                }
+                else -> false
+            }
         }
     }
 

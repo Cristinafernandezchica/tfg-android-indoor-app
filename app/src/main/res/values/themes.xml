@@ -52,4 +52,11 @@
         <item name="android:background">#FFFFFF</item>
     </style>
 
+    <!-- Para cuadros de diálogo -->
+    <style name="ThemeOverlay.ModernDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="materialAlertDialogBodyTextStyle">@style/TextAppearance.MaterialComponents.Body1</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.MaterialComponents.Headline6</item>
+    </style>
+
+
 </resources>

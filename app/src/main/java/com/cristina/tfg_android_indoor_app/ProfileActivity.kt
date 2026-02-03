@@ -1,12 +1,16 @@
 package com.cristina.tfg_android_indoor_app
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.cristina.tfg_android_indoor_app.data.repository.AuthRepository
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 
 class ProfileActivity : AppCompatActivity() {
@@ -55,6 +59,56 @@ class ProfileActivity : AppCompatActivity() {
                     }
             }
         }
+
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    startActivity(Intent(this, HomeActivity::class.java))
+                    true
+                }
+                R.id.nav_profile -> {
+                    startActivity(Intent(this, ProfileActivity::class.java))
+                    true
+                }
+                R.id.nav_settings -> {
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                    true
+                }
+                else -> false
+            }
+        }
+
+        // Para cerrar sesión
+        val btnLogout = findViewById<MaterialButton>(R.id.btnLogout)
+
+        btnLogout.setOnClickListener {
+
+            val dialogView = layoutInflater.inflate(R.layout.dialog_logout, null)
+            val dialog = AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create()
+
+            dialogView.findViewById<MaterialButton>(R.id.btnConfirmLogout).setOnClickListener {
+                val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+                prefs.edit().clear().apply()
+
+                val intent = Intent(this, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+            }
+
+            dialogView.findViewById<MaterialButton>(R.id.btnCancelLogout).setOnClickListener {
+                dialog.dismiss()
+            }
+
+            dialog.show()
+
+        }
+
+
+
     }
 }
 
