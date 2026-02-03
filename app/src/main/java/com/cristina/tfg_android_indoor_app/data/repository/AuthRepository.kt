@@ -6,6 +6,7 @@ import com.cristina.tfg_android_indoor_app.data.model.UpdateUserRequest
 import com.cristina.tfg_android_indoor_app.data.model.UserListItem
 import com.cristina.tfg_android_indoor_app.data.model.UserResponse
 import com.cristina.tfg_android_indoor_app.data.remote.ApiClient
+import org.json.JSONObject
 
 class AuthRepository {
 
@@ -37,12 +38,14 @@ class AuthRepository {
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Error ${response.code()}"))
+                val errorBody = response.errorBody()?.string()
+                Result.failure(Exception(parseApiError(errorBody)))
             }
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
 
     suspend fun updateUser(token: String, name: String, email: String, password: String): Result<Unit> {
         return try {
@@ -117,6 +120,40 @@ class AuthRepository {
             Result.failure(e)
         }
     }
+
+
+    private fun parseApiError(errorBody: String?): String {
+        if (errorBody.isNullOrEmpty()) return "Error desconocido"
+
+        return try {
+            val json = JSONObject(errorBody)
+
+            when {
+                json.has("errors") -> {
+                    val errors = json.getJSONObject("errors")
+                    val messages = mutableListOf<String>()
+                    errors.keys().forEach { key ->
+                        val arr = errors.getJSONArray(key)
+                        for (i in 0 until arr.length()) {
+                            messages.add(arr.getString(i))
+                        }
+                    }
+                    messages.joinToString("\n")
+                }
+                json.has("message") -> json.getString("message")
+                json.has("details") -> {
+                    val arr = json.getJSONArray("details")
+                    (0 until arr.length()).joinToString("\n") { arr.getString(it) }
+                }
+                json.has("error") -> json.getString("error")   // ← AÑADIDO
+                else -> "Error desconocido"
+            }
+
+        } catch (e: Exception) {
+            "Error inesperado"
+        }
+    }
+
 
 
 
