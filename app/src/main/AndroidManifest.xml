@@ -55,6 +55,9 @@
 
         <activity android:name=".MapActivity" />
 
+        <activity android:name=".ThresholdSettingsActivity" />
+
+
     </application>
 
 </manifest>

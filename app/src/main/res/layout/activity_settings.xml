@@ -35,7 +35,17 @@
             android:layout_marginTop="16dp"
             app:cornerRadius="12dp" />
 
+        <!-- Botón: Configuración de umbrales -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnConfigThreshold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Configurar umbrales"
+            android:layout_marginTop="16dp"
+            app:cornerRadius="12dp" />
+
     </LinearLayout>
+
 
     <!-- Barra de navegación inferior -->
     <com.google.android.material.bottomnavigation.BottomNavigationView

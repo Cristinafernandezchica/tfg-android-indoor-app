@@ -2,6 +2,7 @@ package com.cristina.tfg_android_indoor_app.data.repository
 
 import com.cristina.tfg_android_indoor_app.data.model.LoginRequest
 import com.cristina.tfg_android_indoor_app.data.model.RegisterRequest
+import com.cristina.tfg_android_indoor_app.data.model.ThresholdsRequest
 import com.cristina.tfg_android_indoor_app.data.model.UpdateUserRequest
 import com.cristina.tfg_android_indoor_app.data.model.UserListItem
 import com.cristina.tfg_android_indoor_app.data.model.UserResponse
@@ -160,9 +161,33 @@ class AuthRepository {
         }
     }
 
+    suspend fun getMyThresholds(token: String): Result<Map<String, Int>> {
+        return try {
+            val response = ApiClient.authApi.getMyThresholds("Bearer $token")
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: emptyMap())
+            } else {
+                Result.failure(Exception("Error ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
+    suspend fun saveThresholds(token: String, thresholds: Map<String, Int>): Result<Unit> {
+        return try {
+            val body = ThresholdsRequest(thresholds)
+            val response = ApiClient.authApi.setMyThresholds("Bearer $token", body)
 
-
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Error ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
 }
 

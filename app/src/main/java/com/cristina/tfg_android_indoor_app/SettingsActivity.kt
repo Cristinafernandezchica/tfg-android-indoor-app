@@ -15,6 +15,11 @@ class SettingsActivity : AppCompatActivity() {
 
         // Referencias
         val btnUserList = findViewById<MaterialButton>(R.id.btnUserList)
+        val btnConfigThreshold = findViewById<MaterialButton>(R.id.btnConfigThreshold)
+
+        btnConfigThreshold.setOnClickListener {
+            startActivity(Intent(this, ThresholdSettingsActivity::class.java))
+        }
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
         // Recuperar rol del usuario

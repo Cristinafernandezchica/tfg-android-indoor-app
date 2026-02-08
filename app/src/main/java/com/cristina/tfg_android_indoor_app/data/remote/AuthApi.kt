@@ -4,6 +4,7 @@ import com.cristina.tfg_android_indoor_app.data.model.LoginRequest
 import com.cristina.tfg_android_indoor_app.data.model.LoginResponse
 import com.cristina.tfg_android_indoor_app.data.model.RegisterRequest
 import com.cristina.tfg_android_indoor_app.data.model.RegisterResponse
+import com.cristina.tfg_android_indoor_app.data.model.ThresholdsRequest
 import com.cristina.tfg_android_indoor_app.data.model.UpdateUserRequest
 import com.cristina.tfg_android_indoor_app.data.model.UserListItem
 import com.cristina.tfg_android_indoor_app.data.model.UserResponse
@@ -67,6 +68,20 @@ interface AuthApi {
         @Path("id") id: Int,
         @Body body: Map<String, String>
     ): Response<Unit>
+
+    @GET("auth/me/thresholds")
+    suspend fun getMyThresholds(
+        @Header("Authorization") token: String
+    ): Response<Map<String, Int>>
+
+    @PUT("auth/me/thresholds")
+    suspend fun setMyThresholds(
+        @Header("Authorization") token: String,
+        @Body body: ThresholdsRequest
+    ): Response<Map<String, Int>>
+
+
+
 
 
 }
