@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cristina.tfg_android_indoor_app.HomeActivity
+import com.cristina.tfg_android_indoor_app.MapActivity
 import com.cristina.tfg_android_indoor_app.ProfileActivity
 import com.cristina.tfg_android_indoor_app.R
 import com.cristina.tfg_android_indoor_app.SettingsActivity
@@ -71,6 +72,7 @@ class UserListActivity : AppCompatActivity() {
             loadUsers(it.toString())
         }
 
+        // Para manejo del navbar
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
         bottomNav.setOnItemSelectedListener { item ->
@@ -87,9 +89,14 @@ class UserListActivity : AppCompatActivity() {
                     startActivity(Intent(this, SettingsActivity::class.java))
                     true
                 }
+                R.id.nav_map -> {
+                    startActivity(Intent(this, MapActivity::class.java))
+                    true
+                }
                 else -> false
             }
         }
+
     }
 
     private fun deleteUser(id: Int, token: String) {

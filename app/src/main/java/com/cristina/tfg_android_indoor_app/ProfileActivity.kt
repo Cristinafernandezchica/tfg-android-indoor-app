@@ -60,6 +60,7 @@ class ProfileActivity : AppCompatActivity() {
             }
         }
 
+        // Para manejo del navbar
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
         bottomNav.setOnItemSelectedListener { item ->
@@ -76,9 +77,14 @@ class ProfileActivity : AppCompatActivity() {
                     startActivity(Intent(this, SettingsActivity::class.java))
                     true
                 }
+                R.id.nav_map -> {
+                    startActivity(Intent(this, MapActivity::class.java))
+                    true
+                }
                 else -> false
             }
         }
+
 
         // Para cerrar sesión
         val btnLogout = findViewById<MaterialButton>(R.id.btnLogout)

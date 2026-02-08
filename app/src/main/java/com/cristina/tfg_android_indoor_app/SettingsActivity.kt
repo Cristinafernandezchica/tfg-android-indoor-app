@@ -31,7 +31,7 @@ class SettingsActivity : AppCompatActivity() {
             startActivity(Intent(this, UserListActivity::class.java))
         }
 
-        // Configurar navbar
+        // Para manejo del navbar
         bottomNav.selectedItemId = R.id.nav_settings
 
         bottomNav.setOnItemSelectedListener { item ->
@@ -44,9 +44,17 @@ class SettingsActivity : AppCompatActivity() {
                     startActivity(Intent(this, ProfileActivity::class.java))
                     true
                 }
-                R.id.nav_settings -> true
+                R.id.nav_settings -> {
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                    true
+                }
+                R.id.nav_map -> {
+                    startActivity(Intent(this, MapActivity::class.java))
+                    true
+                }
                 else -> false
             }
         }
+
     }
 }

@@ -32,26 +32,30 @@ class HomeActivity : AppCompatActivity() {
             startActivity(Intent(this, UserListActivity::class.java))
         }
 
-        // 5. Configurar la barra inferior
+        // Para manejo del navbar
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
-
-                R.id.nav_home -> true
-
+                R.id.nav_home -> {
+                    startActivity(Intent(this, HomeActivity::class.java))
+                    true
+                }
                 R.id.nav_profile -> {
                     startActivity(Intent(this, ProfileActivity::class.java))
                     true
                 }
-
                 R.id.nav_settings -> {
                     startActivity(Intent(this, SettingsActivity::class.java))
                     true
                 }
-
+                R.id.nav_map -> {
+                    startActivity(Intent(this, MapActivity::class.java))
+                    true
+                }
                 else -> false
             }
         }
+
     }
 }
