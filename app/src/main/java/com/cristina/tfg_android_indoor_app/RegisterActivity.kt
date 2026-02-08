@@ -47,10 +47,17 @@ class RegisterActivity : AppCompatActivity() {
             lifecycleScope.launch {
                 val result = authRepository.register(username, email, password, name)
                 result
-                    .onSuccess {
+                    .onSuccess { token ->
+                        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+                        prefs.edit().putString("token", token).apply()
+
                         Toast.makeText(this@RegisterActivity, "Registro correcto", Toast.LENGTH_SHORT).show()
-                        finish() // vuelve al login
+
+                        startActivity(Intent(this@RegisterActivity, HomeActivity::class.java))
+                        finish()
                     }
+
+
                     .onFailure { e ->
                         Snackbar.make(
                             findViewById(android.R.id.content),

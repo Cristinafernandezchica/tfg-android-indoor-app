@@ -1,9 +1,9 @@
 package com.cristina.tfg_android_indoor_app.data.remote
 
-import androidx.compose.ui.graphics.vector.Path
 import com.cristina.tfg_android_indoor_app.data.model.LoginRequest
 import com.cristina.tfg_android_indoor_app.data.model.LoginResponse
 import com.cristina.tfg_android_indoor_app.data.model.RegisterRequest
+import com.cristina.tfg_android_indoor_app.data.model.RegisterResponse
 import com.cristina.tfg_android_indoor_app.data.model.UpdateUserRequest
 import com.cristina.tfg_android_indoor_app.data.model.UserListItem
 import com.cristina.tfg_android_indoor_app.data.model.UserResponse
@@ -27,7 +27,7 @@ interface AuthApi {
     @POST("auth/register")
     suspend fun register(
         @Body request: RegisterRequest
-    ): Response<Unit>
+    ): Response<RegisterResponse>
 
     @PUT("auth/update")
     suspend fun updateUser(

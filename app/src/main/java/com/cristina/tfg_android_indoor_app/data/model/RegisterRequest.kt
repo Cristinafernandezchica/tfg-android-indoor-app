@@ -7,4 +7,9 @@ data class RegisterRequest(
     val name: String
 )
 
+data class RegisterResponse(
+    val token: String
+)
+
+
 

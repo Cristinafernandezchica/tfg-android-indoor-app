@@ -30,13 +30,18 @@ class AuthRepository {
     }
 
 
-    suspend fun register(username: String, email: String, password: String, name: String): Result<Unit> {
+    suspend fun register(username: String, email: String, password: String, name: String): Result<String> {
         return try {
             val request = RegisterRequest(username, email, password, name)
             val response = ApiClient.authApi.register(request)
 
             if (response.isSuccessful) {
-                Result.success(Unit)
+                val token = response.body()?.token
+                if (token != null) {
+                    Result.success(token)
+                } else {
+                    Result.failure(Exception("Token vacío"))
+                }
             } else {
                 val errorBody = response.errorBody()?.string()
                 Result.failure(Exception(parseApiError(errorBody)))
@@ -45,6 +50,7 @@ class AuthRepository {
             Result.failure(e)
         }
     }
+
 
 
     suspend fun updateUser(token: String, name: String, email: String, password: String): Result<Unit> {
