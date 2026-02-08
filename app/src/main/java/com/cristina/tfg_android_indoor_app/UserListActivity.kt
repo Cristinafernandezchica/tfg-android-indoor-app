@@ -10,6 +10,7 @@ import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.cristina.tfg_android_indoor_app.BaseActivity
 import com.cristina.tfg_android_indoor_app.HomeActivity
 import com.cristina.tfg_android_indoor_app.MapActivity
 import com.cristina.tfg_android_indoor_app.ProfileActivity
@@ -20,7 +21,7 @@ import com.cristina.tfg_android_indoor_app.data.repository.AuthRepository
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 
-class UserListActivity : AppCompatActivity() {
+class UserListActivity : BaseActivity() {
 
     private val authRepository = AuthRepository()
 
@@ -33,6 +34,8 @@ class UserListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_list)
+        bottomNav.selectedItemId = R.id.nav_user_list
+
 
         val rvUsers = findViewById<RecyclerView>(R.id.rvUsers)
         val etSearch = findViewById<EditText>(R.id.etSearch)
@@ -70,31 +73,6 @@ class UserListActivity : AppCompatActivity() {
 
         etSearch.addTextChangedListener {
             loadUsers(it.toString())
-        }
-
-        // Para manejo del navbar
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
-
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    startActivity(Intent(this, HomeActivity::class.java))
-                    true
-                }
-                R.id.nav_profile -> {
-                    startActivity(Intent(this, ProfileActivity::class.java))
-                    true
-                }
-                R.id.nav_settings -> {
-                    startActivity(Intent(this, SettingsActivity::class.java))
-                    true
-                }
-                R.id.nav_map -> {
-                    startActivity(Intent(this, MapActivity::class.java))
-                    true
-                }
-                else -> false
-            }
         }
 
     }

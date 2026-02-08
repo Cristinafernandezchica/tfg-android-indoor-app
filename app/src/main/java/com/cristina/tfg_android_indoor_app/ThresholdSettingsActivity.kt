@@ -10,7 +10,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 
-class ThresholdSettingsActivity : AppCompatActivity() {
+class ThresholdSettingsActivity : BaseActivity() {
 
     private val authRepository = AuthRepository()
 
@@ -30,7 +30,7 @@ class ThresholdSettingsActivity : AppCompatActivity() {
 
         val btnSave = findViewById<MaterialButton>(R.id.btnSaveThresholds)
 
-        // 1️⃣ Cargar valores actuales desde la API
+        // Cargamos valores actuales desde la API
         lifecycleScope.launch {
             val token = getSharedPreferences("auth", MODE_PRIVATE)
                 .getString("token", "") ?: ""
@@ -49,7 +49,7 @@ class ThresholdSettingsActivity : AppCompatActivity() {
             }
         }
 
-        // 2️⃣ Guardar cambios
+        // Guardamos los cambios realizados
         btnSave.setOnClickListener {
 
             val thresholds = mapOf(

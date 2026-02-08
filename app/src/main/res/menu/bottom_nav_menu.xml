@@ -2,24 +2,23 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/nav_map"
+        android:icon="@drawable/ic_map_2"
+        android:title="Mapa" />
+
+    <item
         android:id="@+id/nav_home"
         android:icon="@android:drawable/ic_menu_view"
         android:title="Inicio" />
 
     <item
+        android:id="@+id/nav_user_list"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Usuarios" />
+
+    <item
         android:id="@+id/nav_profile"
         android:icon="@android:drawable/ic_menu_myplaces"
         android:title="Perfil" />
-
-    <item
-        android:id="@+id/nav_settings"
-        android:icon="@android:drawable/ic_menu_manage"
-        android:title="Ajustes" />
-
-    <item
-        android:id="@+id/nav_map"
-        android:icon="@drawable/ic_map_2"
-        android:title="Mapa" />
-
 
 </menu>

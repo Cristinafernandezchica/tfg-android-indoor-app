@@ -13,13 +13,14 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 
-class ProfileActivity : AppCompatActivity() {
+class ProfileActivity : BaseActivity() {
 
     private val authRepository = AuthRepository()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
+        bottomNav.selectedItemId = R.id.nav_profile
 
         val etName = findViewById<EditText>(R.id.etProfileName)
         val etEmail = findViewById<EditText>(R.id.etProfileEmail)
@@ -57,31 +58,6 @@ class ProfileActivity : AppCompatActivity() {
                     .onFailure { e ->
                         Toast.makeText(this@ProfileActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
-            }
-        }
-
-        // Para manejo del navbar
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
-
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    startActivity(Intent(this, HomeActivity::class.java))
-                    true
-                }
-                R.id.nav_profile -> {
-                    startActivity(Intent(this, ProfileActivity::class.java))
-                    true
-                }
-                R.id.nav_settings -> {
-                    startActivity(Intent(this, SettingsActivity::class.java))
-                    true
-                }
-                R.id.nav_map -> {
-                    startActivity(Intent(this, MapActivity::class.java))
-                    true
-                }
-                else -> false
             }
         }
 

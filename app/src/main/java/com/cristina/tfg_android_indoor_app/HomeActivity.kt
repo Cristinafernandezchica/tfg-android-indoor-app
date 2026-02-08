@@ -9,52 +9,27 @@ import android.widget.TextView
 import com.cristina.tfg_android_indoor_app.ui.userlist.UserListActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
-class HomeActivity : AppCompatActivity() {
+class HomeActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+        bottomNav.selectedItemId = R.id.nav_home
 
-        // 1. Referencia al botón
         val btnUserList = findViewById<Button>(R.id.btnUserList)
 
-        // 2. Leer el rol guardado
+        // Leemos el rol guardado
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
         val role = prefs.getString("role", "user")
 
-        // 3. Mostrar el botón solo si es admin
+        // Se muestra el botón solo si es admin
         if (role == "admin") {
             btnUserList.visibility = View.VISIBLE
         }
 
-        // 4. Acción del botón
+        // Acción del botón
         btnUserList.setOnClickListener {
             startActivity(Intent(this, UserListActivity::class.java))
-        }
-
-        // Para manejo del navbar
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)
-
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    startActivity(Intent(this, HomeActivity::class.java))
-                    true
-                }
-                R.id.nav_profile -> {
-                    startActivity(Intent(this, ProfileActivity::class.java))
-                    true
-                }
-                R.id.nav_settings -> {
-                    startActivity(Intent(this, SettingsActivity::class.java))
-                    true
-                }
-                R.id.nav_map -> {
-                    startActivity(Intent(this, MapActivity::class.java))
-                    true
-                }
-                else -> false
-            }
         }
 
     }

@@ -49,12 +49,19 @@ class LoginActivity : AppCompatActivity() {
                     .onSuccess { token ->
                         tvStatus.text = "Login correcto"
                         tvLoginError.visibility = View.GONE
-                        saveToken(token)
-                        // Aquí luego navegarás a la pantalla principal
-                        val intent = Intent(this@LoginActivity, HomeActivity::class.java)
-                        startActivity(intent)
-                        finish() // para que no vuelva al login al pulsar atrás
+
+                        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+                        prefs.edit().putString("token", token).apply()
+
+                        val userResult = authRepository.getCurrentUser(token)
+                        userResult.onSuccess { user ->
+                            prefs.edit().putString("role", user.role).apply()
+                        }
+
+                        startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
+                        finish()
                     }
+
                     .onFailure { e ->
                         tvStatus.text = ""
                         tvLoginError.text = e.message?.replace("{\"error\":", "")?.replace("}", "")?.replace("\"", "")?.trim()
