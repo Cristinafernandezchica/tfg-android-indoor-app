@@ -1,5 +1,6 @@
 package com.cristina.tfg_android_indoor_app.data.remote
 
+import RoomApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -22,5 +23,23 @@ object ApiClient {
         .build()
 
     val authApi: AuthApi = retrofit.create(AuthApi::class.java)
+
+    val trainingApi: RoomApi = Retrofit.Builder()
+        .baseUrl(ROOMS_API_BASE_URL)
+        .client(client)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(RoomApi::class.java)
+
+
+    val mlApi: MLApi = Retrofit.Builder()
+        .baseUrl(ROOMS_API_BASE_URL)   // misma API que rooms/sensors
+        .client(client)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(MLApi::class.java)
+
+
+
 }
 

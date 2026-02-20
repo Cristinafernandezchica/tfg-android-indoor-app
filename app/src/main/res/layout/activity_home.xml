@@ -20,4 +20,13 @@
         android:visibility="gone"
         android:layout_marginTop="80dp"/>
 
+    <Button
+        android:id="@+id/btnTraining"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Modo entrenamiento"
+        android:visibility="gone"
+        android:layout_marginTop="20dp"/>
+
+
 </FrameLayout>

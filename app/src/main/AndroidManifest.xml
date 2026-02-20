@@ -57,6 +57,12 @@
 
         <activity android:name=".ThresholdSettingsActivity" />
 
+        <activity android:name=".training.TrainingActivity" />
+
+        <activity
+            android:name=".training.TrainingAdminActivity" />
+
+
 
     </application>
 

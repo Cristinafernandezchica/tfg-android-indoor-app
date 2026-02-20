@@ -6,6 +6,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import com.cristina.tfg_android_indoor_app.training.TrainingActivity
+import com.cristina.tfg_android_indoor_app.training.TrainingAdminActivity
 import com.cristina.tfg_android_indoor_app.ui.userlist.UserListActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -17,19 +19,26 @@ class HomeActivity : BaseActivity() {
         bottomNav.selectedItemId = R.id.nav_home
 
         val btnUserList = findViewById<Button>(R.id.btnUserList)
+        val btnTraining = findViewById<Button>(R.id.btnTraining)
 
-        // Leemos el rol guardado
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
         val role = prefs.getString("role", "user")
 
-        // Se muestra el botón solo si es admin
         if (role == "admin") {
             btnUserList.visibility = View.VISIBLE
+            btnTraining.visibility = View.VISIBLE
         }
 
-        // Acción del botón
         btnUserList.setOnClickListener {
             startActivity(Intent(this, UserListActivity::class.java))
+        }
+
+        btnTraining.setOnClickListener {
+            startActivity(Intent(this, TrainingActivity::class.java))
+        }
+
+        btnTraining.setOnClickListener {
+            startActivity(Intent(this, TrainingAdminActivity::class.java))
         }
 
     }
