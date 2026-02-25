@@ -39,8 +39,12 @@ class TrainingAdminActivity : AppCompatActivity() {
         // --- Botones existentes ---
         btnReset.setOnClickListener {
             lifecycleScope.launch {
-                repo.resetTraining()
-                tvOutput.text = "Entrenamiento borrado"
+                val resp = repo.resetTraining()
+                tvOutput.text = if (resp.isSuccessful) {
+                    "Entrenamiento borrado"
+                } else {
+                    "Error al borrar entrenamiento"
+                }
             }
         }
 

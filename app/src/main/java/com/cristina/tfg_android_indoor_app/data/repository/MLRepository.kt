@@ -11,14 +11,9 @@ class MLRepository {
     suspend fun resetTraining() = api.resetTraining()
     suspend fun trainModel() = api.trainModel()
     suspend fun reloadModels() = api.reloadModels()
+
     suspend fun getStatus() = api.getTrainingStatus()
 
     suspend fun updatePosition(userId: String, sensors: List<SensorReading>) =
-        api.updatePosition(
-            UpdatePositionRequest(
-                user_id = userId,
-                sensors = sensors
-            )
-        )
-
+        api.updatePosition(UpdatePositionRequest(user_id = userId, sensors = sensors))
 }
