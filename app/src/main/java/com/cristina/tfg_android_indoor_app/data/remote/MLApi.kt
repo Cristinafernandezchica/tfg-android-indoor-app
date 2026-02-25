@@ -1,21 +1,25 @@
 package com.cristina.tfg_android_indoor_app.data.remote
 
-import com.cristina.tfg_android_indoor_app.data.model.TrainingStatus
-import retrofit2.Response
+import com.cristina.tfg_android_indoor_app.data.model.PositionResponse
+import com.cristina.tfg_android_indoor_app.data.model.UpdatePositionRequest
+import retrofit2.http.Body
 import retrofit2.http.POST
-import retrofit2.http.GET
 
 interface MLApi {
 
     @POST("sensors/ml/reset_training")
-    suspend fun resetTraining(): Response<Unit>
+    suspend fun resetTraining(): Void
 
     @POST("sensors/ml/train")
-    suspend fun trainModel(): Response<Unit>
+    suspend fun trainModel(): Void
 
     @POST("sensors/ml/reload_models")
-    suspend fun reloadModels(): Response<Unit>
+    suspend fun reloadModels(): Void
 
-    @GET("sensors/ml/status")
-    suspend fun getTrainingStatus(): Response<List<TrainingStatus>>
+    @POST("sensors/ml/status")
+    suspend fun getTrainingStatus(): List<Any>
+
+    @POST("sensors/update_position")
+    suspend fun updatePosition(@Body body: UpdatePositionRequest): PositionResponse
+
 }

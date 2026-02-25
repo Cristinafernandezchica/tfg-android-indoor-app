@@ -66,6 +66,7 @@ dependencies {
     implementation(libs.androidx.tools.core)
     implementation(libs.material)
     implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.bluetooth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

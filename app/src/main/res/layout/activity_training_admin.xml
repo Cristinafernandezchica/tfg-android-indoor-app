@@ -39,6 +39,13 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"/>
 
+    <Button
+        android:id="@+id/btnTestPosition"
+        android:text="Probar posicionamiento"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"/>
+
     <TextView
         android:id="@+id/tvOutput"
         android:text=""

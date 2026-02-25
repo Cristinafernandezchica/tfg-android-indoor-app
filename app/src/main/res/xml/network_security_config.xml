@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+
+    <!-- Permitir HTTP en desarrollo (emulador + red local) -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="TODO">10.0.2.2</domain>
+
+        <!-- Emulador Android -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+
+        <!-- IP local del PC (actual) -->
+        <domain includeSubdomains="true">192.168.1.132</domain>
+
     </domain-config>
+
+    <!-- Render (HTTPS) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">indoor-tfg-api-rooms.onrender.com</domain>
+        <domain includeSubdomains="true">indoor-tfg-api-users.onrender.com</domain>
+    </domain-config>
+
 </network-security-config>
