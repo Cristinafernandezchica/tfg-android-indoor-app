@@ -1,21 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- CONTENIDO SUPERIOR (MAPA) -->
-    <FrameLayout
+    <!-- Imagen del mapa indoor -->
+    <com.cristina.tfg_android_indoor_app.map.ZoomableImageView
+        android:id="@+id/mapImage"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="match_parent"
+        android:src="@drawable/piso_piloto_muebles"
+        android:scaleType="matrix" />
 
-        <WebView
-            android:id="@+id/anyplaceWebView"
+    <!-- Overlay para dibujar rutas -->
+    <com.cristina.tfg_android_indoor_app.map.RouteOverlayView
+        android:id="@+id/routeOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="20dp" />
+
+    <!-- Botones -->
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:padding="16dp">
+
+        <Button
+            android:id="@+id/btnStartRoute"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="wrap_content"
+            android:text="Iniciar ruta"
+            android:backgroundTint="#2196F3" />
 
-    </FrameLayout>
+        <Button
+            android:id="@+id/btnContinueRoute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Continuar ruta"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#4CAF50" />
 
-</LinearLayout>
+        <Button
+            android:id="@+id/btnClearRoute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Borrar ruta"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#F44336" />
+
+        <Button
+            android:id="@+id/btnTestOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Probar Overlay"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#FF9800" />
+
+        <Button
+            android:id="@+id/btnTestRealisticRoute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Probar Ruta Realista"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#4CAF50" />
+
+        <Button
+            android:id="@+id/btnDebugSize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Debug: Ver tamaño imagen"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#9C27B0" />
+
+    </LinearLayout>
+
+</FrameLayout>

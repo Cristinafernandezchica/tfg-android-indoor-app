@@ -109,7 +109,7 @@ class TrainingActivity : AppCompatActivity() {
                 else
                     "Lecturas capturadas (${lastScan.size})"
 
-            }, 3000)
+            }, 8000)
         }
 
         // Enviar muestra
@@ -118,7 +118,11 @@ class TrainingActivity : AppCompatActivity() {
             val zone = spinnerZones.selectedItem as String
 
             val prefs = getSharedPreferences("auth", MODE_PRIVATE)
-            val userId = prefs.getString("user_id", "test")!!
+            val userId = when (val value = prefs.all["user_id"]) {
+                is String -> value
+                is Int -> value.toString()
+                else -> "test"
+            }
 
             val body = TrainingRequest(
                 userId = userId,

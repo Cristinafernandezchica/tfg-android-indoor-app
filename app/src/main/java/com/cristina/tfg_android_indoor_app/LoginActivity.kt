@@ -55,8 +55,12 @@ class LoginActivity : AppCompatActivity() {
 
                         val userResult = authRepository.getCurrentUser(token)
                         userResult.onSuccess { user ->
-                            prefs.edit().putString("role", user.role).apply()
+                            prefs.edit()
+                                .putString("role", user.role)
+                                .putInt("user_id", user.id)
+                                .apply()
                         }
+
 
                         startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
                         finish()

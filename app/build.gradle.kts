@@ -40,6 +40,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.nanohttpd)
+
     // Retrofit + Gson
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
@@ -67,6 +69,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.bluetooth)
+    implementation(libs.androidx.core.backported.fixes)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -98,7 +98,11 @@ class TrainingAdminActivity : AppCompatActivity() {
 
                 lifecycleScope.launch {
                     val prefs = getSharedPreferences("auth", MODE_PRIVATE)
-                    val userId = prefs.getString("user_id", "test")!!
+                    val userId = when (val value = prefs.all["user_id"]) {
+                        is String -> value
+                        is Int -> value.toString()
+                        else -> "test"
+                    }
 
                     val response = repo.updatePosition(userId, scanList)
 
@@ -107,7 +111,7 @@ class TrainingAdminActivity : AppCompatActivity() {
                     } ?: "Error detectando posición"
                 }
 
-            }, 3000)
+            }, 8000)
         }
     }
 
