@@ -1,23 +1,31 @@
 package com.cristina.tfg_android_indoor_app
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
-import android.view.MenuItem
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.cristina.tfg_android_indoor_app.data.remote.ROOMS_API_BASE_URL
+import com.cristina.tfg_android_indoor_app.data.repository.MLRepository
 import com.cristina.tfg_android_indoor_app.map.MapCoordinates
-import com.cristina.tfg_android_indoor_app.map.ZoomableImageView
 import com.cristina.tfg_android_indoor_app.map.RouteOverlayView
+import com.cristina.tfg_android_indoor_app.map.ZoomableImageView
+import com.cristina.tfg_android_indoor_app.services.BeaconScanService
 import com.google.android.material.navigation.NavigationView
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class MapActivity : BaseActivity() {
@@ -32,12 +40,52 @@ class MapActivity : BaseActivity() {
     private lateinit var btnNextStep: Button
     private lateinit var btnShowFullRoute: Button
     private lateinit var btnClearRoute: Button
+    private lateinit var btnForceStart: Button
     private lateinit var tvRouteProgress: TextView
 
     private val TAG = "MAP_ACTIVITY"
     private var currentRoomRoute = emptyList<String>()
     private var currentStepIndex = 0
     private var showingFullRoute = true
+    private var lastKnownRoom: String? = null
+
+    // Receiver para actualizaciones de posición desde el servicio
+    private val positionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val room = intent.getStringExtra(BeaconScanService.EXTRA_ROOM)
+            val zone = intent.getStringExtra(BeaconScanService.EXTRA_ZONE)
+            val status = intent.getStringExtra(BeaconScanService.EXTRA_STATUS)
+            val pendingCount = intent.getIntExtra(BeaconScanService.EXTRA_PENDING_COUNT, 0)
+
+            when (status) {
+                "pending" -> {
+                    room?.let {
+                        if (it != "PASILLO") {
+                            val coordinates = MapCoordinates.getRoomCenter(it)
+                            if (coordinates != null) {
+                                overlay.updateCurrentPosition(it, coordinates, pendingCount)
+                                Log.d(TAG, "🟡 Detectando: $it ($pendingCount/3)")
+                            }
+                        }
+                    }
+                }
+                "confirmed" -> {
+                    room?.let {
+                        if (it != "PASILLO") {
+                            val coordinates = MapCoordinates.getRoomCenter(it)
+                            if (coordinates != null) {
+                                overlay.updateCurrentPosition(it, coordinates, 0)
+                                if (it != lastKnownRoom) {
+                                    lastKnownRoom = it
+                                    Log.d(TAG, "📍 Posición confirmada: $it")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +101,7 @@ class MapActivity : BaseActivity() {
         btnNextStep = findViewById(R.id.btnNextStep)
         btnShowFullRoute = findViewById(R.id.btnShowFullRoute)
         btnClearRoute = findViewById(R.id.btnClearRoute)
+        btnForceStart = findViewById(R.id.btnForceStart)
 
         val headerView = navigationView.getHeaderView(0)
         tvRouteProgress = headerView.findViewById(R.id.tvRouteProgress)
@@ -61,24 +110,40 @@ class MapActivity : BaseActivity() {
             drawerLayout.openDrawer(GravityCompat.START)
         }
 
-        btnStartRoute.setOnClickListener { requestRouteFromBackend() }
+        btnStartRoute.setOnClickListener {
+            requestRouteFromBackend(forceStart = false)
+        }
+
         btnPrevStep.setOnClickListener { prevStep() }
         btnNextStep.setOnClickListener { nextStep() }
         btnShowFullRoute.setOnClickListener { toggleRouteView() }
         btnClearRoute.setOnClickListener { clearRoute() }
+        btnForceStart.setOnClickListener {
+            requestRouteFromBackend(forceStart = true)
+        }
 
-        // Deshabilitar botones hasta que haya ruta
         enableNavigationButtons(false)
 
-        // Escuchar cambios en la matriz del mapa
         mapImage.setOnMatrixChangeListener { matrix ->
             overlay.setTransformMatrix(matrix)
         }
 
-        // Inicializar
         mapImage.post {
             overlay.setTransformMatrix(mapImage.getCurrentMatrix())
             updateMapCoordinatesSize()
+        }
+
+        // Registrar receiver para actualizaciones de posición
+        val filter = IntentFilter(BeaconScanService.ACTION_POSITION_UPDATE)
+        registerReceiver(positionReceiver, filter)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            unregisterReceiver(positionReceiver)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error unregistering receiver: ${e.message}")
         }
     }
 
@@ -111,10 +176,14 @@ class MapActivity : BaseActivity() {
         tvRouteProgress.text = "${currentStepIndex + 1}/${currentRoomRoute.size} pasos"
     }
 
-    private fun requestRouteFromBackend() {
-        Toast.makeText(this, "Calculando ruta...", Toast.LENGTH_SHORT).show()
+    private fun requestRouteFromBackend(forceStart: Boolean = false) {
+        val message = if (forceStart) {
+            "Generando ruta desde ENTRADA..."
+        } else {
+            "Calculando ruta desde tu posición..."
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
-        val queue = Volley.newRequestQueue(this)
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
         val userId = prefs.getInt("user_id", -1)
 
@@ -123,7 +192,11 @@ class MapActivity : BaseActivity() {
             return
         }
 
-        val json = JSONObject().apply { put("user_id", userId) }
+        val queue = Volley.newRequestQueue(this)
+        val json = JSONObject().apply {
+            put("user_id", userId.toString())
+            put("force_start", forceStart)
+        }
 
         val request = JsonObjectRequest(
             Request.Method.POST,
@@ -132,6 +205,7 @@ class MapActivity : BaseActivity() {
             { response ->
                 try {
                     val roomsArray = response.getJSONArray("rooms")
+                    val startRoom = response.optString("start_room", "ENTRADA")
                     val roomRoute = mutableListOf<String>()
 
                     for (i in 0 until roomsArray.length()) {
@@ -141,7 +215,8 @@ class MapActivity : BaseActivity() {
                         }
                     }
 
-                    Log.d(TAG, "Ruta de habitaciones: $roomRoute")
+                    Log.d(TAG, "Ruta desde: $startRoom")
+                    Log.d(TAG, "Ruta: $roomRoute")
 
                     if (roomRoute.size >= 2) {
                         currentRoomRoute = roomRoute
@@ -165,7 +240,7 @@ class MapActivity : BaseActivity() {
 
                         Toast.makeText(
                             this,
-                            "✅ Ruta: ${roomRoute.size} habitaciones",
+                            "✅ Ruta desde $startRoom (${roomRoute.size} habitaciones)",
                             Toast.LENGTH_SHORT
                         ).show()
                     } else {
@@ -244,6 +319,7 @@ class MapActivity : BaseActivity() {
         currentStepIndex = 0
         showingFullRoute = true
         overlay.clearRoute()
+        overlay.clearCurrentPosition()
         enableNavigationButtons(false)
         updateMenu()
         tvRouteProgress.text = "0/0 pasos"

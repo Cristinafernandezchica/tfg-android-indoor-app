@@ -7,6 +7,8 @@ private const val LOCAL_PORT_USERS = "5002"
 
 private const val DEPLOY = false
 
+const val CONFIRMATION_THRESHOLD = 3  // Número de detecciones necesarias
+
 private val isEmulator: Boolean =
     (android.os.Build.FINGERPRINT.startsWith("generic")
             || android.os.Build.FINGERPRINT.lowercase().contains("vbox")

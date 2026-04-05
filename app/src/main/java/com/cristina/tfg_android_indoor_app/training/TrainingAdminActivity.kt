@@ -73,7 +73,7 @@ class TrainingAdminActivity : AppCompatActivity() {
             startActivity(Intent(this, TrainingActivity::class.java))
         }
 
-        // --- NUEVO: Botón de pruebas ---
+        // --- NUEVO: Botón de pruebas con detect_once ---
         btnTestPosition.setOnClickListener {
             tvOutput.text = "Escaneando para posicionamiento..."
 
@@ -104,11 +104,14 @@ class TrainingAdminActivity : AppCompatActivity() {
                         else -> "test"
                     }
 
-                    val response = repo.updatePosition(userId, scanList)
+                    // Usar detectOnce para detección inmediata
+                    val result = repo.detectOnce(userId, scanList)
 
-                    tvOutput.text = response?.let {
-                        "Habitación detectada: ${it.room}\nZona detectada: ${it.zone}"
-                    } ?: "Error detectando posición"
+                    tvOutput.text = if (result != null && result.room != null) {
+                        "✅ Habitación: ${result.room}\n📍 Zona: ${result.zone ?: "Ninguna"}\n📊 Confianza: ${result.confidence}\n📡 Beacons: ${result.sensorsCount}"
+                    } else {
+                        "❌ No se pudo detectar la habitación\n${result?.let { "Confianza: ${it.confidence}" } ?: ""}"
+                    }
                 }
 
             }, 8000)
@@ -116,7 +119,7 @@ class TrainingAdminActivity : AppCompatActivity() {
     }
 
     // -----------------------------
-    // ESCANEO BLE (igual que TrainingActivity)
+    // ESCANEO BLE
     // -----------------------------
 
     private fun canStartScan(): Boolean {

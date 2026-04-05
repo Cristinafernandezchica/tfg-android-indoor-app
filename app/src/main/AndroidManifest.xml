@@ -65,6 +65,11 @@
             android:name=".training.TrainingAdminActivity" />
 
 
+        <service
+            android:name=".services.BeaconScanService"
+            android:enabled="true"
+            android:exported="false" />
+
 
     </application>
 

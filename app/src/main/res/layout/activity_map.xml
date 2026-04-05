@@ -107,6 +107,14 @@
 
             </LinearLayout>
 
+            <Button
+                android:id="@+id/btnForceStart"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Iniciar desde ENTRADA"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="#FF9800" />
+
         </LinearLayout>
 
     </FrameLayout>
@@ -119,5 +127,6 @@
         android:layout_gravity="start"
         app:headerLayout="@layout/nav_header_route"
         app:menu="@menu/route_menu" />
+
 
 </androidx.drawerlayout.widget.DrawerLayout>
