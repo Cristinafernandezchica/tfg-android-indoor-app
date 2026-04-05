@@ -2,8 +2,14 @@ package com.cristina.tfg_android_indoor_app
 
 import android.os.Bundle
 import android.util.Log
+import android.view.MenuItem
 import android.widget.Button
+import android.widget.ImageButton
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
@@ -11,21 +17,27 @@ import com.cristina.tfg_android_indoor_app.data.remote.ROOMS_API_BASE_URL
 import com.cristina.tfg_android_indoor_app.map.MapCoordinates
 import com.cristina.tfg_android_indoor_app.map.ZoomableImageView
 import com.cristina.tfg_android_indoor_app.map.RouteOverlayView
+import com.google.android.material.navigation.NavigationView
 import org.json.JSONObject
 
 class MapActivity : BaseActivity() {
 
     private lateinit var mapImage: ZoomableImageView
     private lateinit var overlay: RouteOverlayView
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navigationView: NavigationView
+    private lateinit var btnMenu: ImageButton
     private lateinit var btnStartRoute: Button
-    private lateinit var btnContinueRoute: Button
+    private lateinit var btnPrevStep: Button
+    private lateinit var btnNextStep: Button
+    private lateinit var btnShowFullRoute: Button
     private lateinit var btnClearRoute: Button
-    private lateinit var btnTestOverlay: Button
-    private lateinit var btnTestRealisticRoute: Button
-    private lateinit var btnDebugSize: Button
+    private lateinit var tvRouteProgress: TextView
 
     private val TAG = "MAP_ACTIVITY"
-    private var currentRoutePoints = emptyList<Pair<Float, Float>>()
+    private var currentRoomRoute = emptyList<String>()
+    private var currentStepIndex = 0
+    private var showingFullRoute = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,52 +45,74 @@ class MapActivity : BaseActivity() {
 
         mapImage = findViewById(R.id.mapImage)
         overlay = findViewById(R.id.routeOverlay)
+        drawerLayout = findViewById(R.id.drawerLayout)
+        navigationView = findViewById(R.id.navigationView)
+        btnMenu = findViewById(R.id.btnMenu)
         btnStartRoute = findViewById(R.id.btnStartRoute)
-        btnContinueRoute = findViewById(R.id.btnContinueRoute)
+        btnPrevStep = findViewById(R.id.btnPrevStep)
+        btnNextStep = findViewById(R.id.btnNextStep)
+        btnShowFullRoute = findViewById(R.id.btnShowFullRoute)
         btnClearRoute = findViewById(R.id.btnClearRoute)
-        btnTestOverlay = findViewById(R.id.btnTestOverlay)
-        btnTestRealisticRoute = findViewById(R.id.btnTestRealisticRoute)
-        btnDebugSize = findViewById(R.id.btnDebugSize)
+
+        val headerView = navigationView.getHeaderView(0)
+        tvRouteProgress = headerView.findViewById(R.id.tvRouteProgress)
+
+        btnMenu.setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.START)
+        }
 
         btnStartRoute.setOnClickListener { requestRouteFromBackend() }
-        btnClearRoute.setOnClickListener {
-            currentRoutePoints = emptyList()
-            overlay.setRoutePixels(emptyList())
-            btnContinueRoute.visibility = Button.GONE
-            Toast.makeText(this, "Ruta borrada", Toast.LENGTH_SHORT).show()
-        }
-        btnTestOverlay.setOnClickListener { testOverlay() }
-        btnTestRealisticRoute.setOnClickListener { testRealisticRoute() }
-        btnDebugSize.setOnClickListener { debugImageSize() }
+        btnPrevStep.setOnClickListener { prevStep() }
+        btnNextStep.setOnClickListener { nextStep() }
+        btnShowFullRoute.setOnClickListener { toggleRouteView() }
+        btnClearRoute.setOnClickListener { clearRoute() }
 
-        // Escuchar cambios en la matriz del mapa para actualizar el overlay
+        // Deshabilitar botones hasta que haya ruta
+        enableNavigationButtons(false)
+
+        // Escuchar cambios en la matriz del mapa
         mapImage.setOnMatrixChangeListener { matrix ->
             overlay.setTransformMatrix(matrix)
         }
 
-        // Inicializar con la matriz actual y actualizar dimensiones de MapCoordinates
+        // Inicializar
         mapImage.post {
             overlay.setTransformMatrix(mapImage.getCurrentMatrix())
             updateMapCoordinatesSize()
-            debugImageSize()
         }
     }
 
-    /**
-     * Actualiza las dimensiones de la imagen en MapCoordinates para el escalado correcto
-     */
     private fun updateMapCoordinatesSize() {
         val drawable = mapImage.drawable
         if (drawable != null) {
-            val width = drawable.intrinsicWidth
-            val height = drawable.intrinsicHeight
-            MapCoordinates.updateCurrentDimensions(width, height)
-            Log.d(TAG, "MapCoordinates actualizado: ${width}x${height}")
+            MapCoordinates.updateCurrentDimensions(drawable.intrinsicWidth, drawable.intrinsicHeight)
         }
     }
 
+    private fun enableNavigationButtons(enabled: Boolean) {
+        btnPrevStep.isEnabled = enabled
+        btnNextStep.isEnabled = enabled
+        btnShowFullRoute.isEnabled = enabled
+    }
+
+    private fun updateMenu() {
+        val menu = navigationView.menu
+        menu.clear()
+
+        currentRoomRoute.forEachIndexed { index, room ->
+            val title = "${index + 1}. $room"
+            val item = menu.add(title)
+            item.isCheckable = true
+            if (index == currentStepIndex) {
+                item.isChecked = true
+            }
+        }
+
+        tvRouteProgress.text = "${currentStepIndex + 1}/${currentRoomRoute.size} pasos"
+    }
+
     private fun requestRouteFromBackend() {
-        Toast.makeText(this, "Generando ruta...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Calculando ruta...", Toast.LENGTH_SHORT).show()
 
         val queue = Volley.newRequestQueue(this)
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
@@ -96,42 +130,46 @@ class MapActivity : BaseActivity() {
             "$ROOMS_API_BASE_URL/routes/auto/bfs",
             json,
             { response ->
-                Log.d(TAG, "Respuesta backend: $response")
-
                 try {
-                    val pois = response.getJSONArray("pois")
-                    val rooms = response.getJSONArray("rooms")
+                    val roomsArray = response.getJSONArray("rooms")
                     val roomRoute = mutableListOf<String>()
 
-                    for (i in 0 until rooms.length()) {
-                        roomRoute.add(rooms.getString(i))
+                    for (i in 0 until roomsArray.length()) {
+                        val room = roomsArray.getString(i)
+                        if (room != "PASILLO") {
+                            roomRoute.add(room)
+                        }
                     }
 
                     Log.d(TAG, "Ruta de habitaciones: $roomRoute")
 
-                    // Generar ruta detallada con puertas usando MapCoordinates
-                    val detailedPoints = MapCoordinates.generateFullRoute(roomRoute)
+                    if (roomRoute.size >= 2) {
+                        currentRoomRoute = roomRoute
+                        currentStepIndex = 0
+                        showingFullRoute = true
 
-                    if (detailedPoints.isNotEmpty()) {
-                        currentRoutePoints = detailedPoints
-                        overlay.setRoutePixels(detailedPoints)
-                        btnContinueRoute.visibility = Button.VISIBLE
-                        Toast.makeText(
-                            this,
-                            "✅ Ruta cargada con ${detailedPoints.size} puntos",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                        Log.d(TAG, "Puntos generados: ${detailedPoints.size}")
-                        detailedPoints.forEachIndexed { i, (x, y) ->
-                            Log.d(TAG, "Punto $i: ($x, $y)")
+                        val fullRoute = MapCoordinates.generateFullRoute(roomRoute)
+                        val roomCenters = roomRoute.associateWith { roomId ->
+                            MapCoordinates.getRoomCenter(roomId) ?: Pair(0f, 0f)
                         }
-                    } else {
+
+                        overlay.setFullRoute(fullRoute, roomRoute, roomCenters)
+                        overlay.setCurrentStep(0)
+                        overlay.setShowFullRoute(true)
+
+                        enableNavigationButtons(true)
+                        updateMenu()
+                        btnShowFullRoute.text = "Paso a paso"
+
+                        drawerLayout.closeDrawer(GravityCompat.START)
+
                         Toast.makeText(
                             this,
-                            "⚠️ No se pudo generar la ruta detallada",
+                            "✅ Ruta: ${roomRoute.size} habitaciones",
                             Toast.LENGTH_SHORT
                         ).show()
+                    } else {
+                        Toast.makeText(this, "No se pudo calcular la ruta", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Error: ${e.message}")
@@ -147,102 +185,69 @@ class MapActivity : BaseActivity() {
         queue.add(request)
     }
 
-    /**
-     * Prueba de ruta realista usando las coordenadas de puertas
-     * Ruta: ENTRADA → SALON → PASILLO → HAB1 → PASILLO → HAB2 → PASILLO → HAB3
-     */
-    private fun testRealisticRoute() {
-        // Actualizar dimensiones antes de calcular coordenadas escaladas
-        updateMapCoordinatesSize()
+    private fun toggleRouteView() {
+        showingFullRoute = !showingFullRoute
+        overlay.setShowFullRoute(showingFullRoute)
 
-        // Definir una ruta realista que incluya el PASILLO múltiples veces
-        val roomRoute = listOf(
-            "ENTRADA",
-            "SALON",
-            "PASILLO",
-            "HAB1",
-            "PASILLO",
-            "HAB2",
-            "PASILLO",
-            "HAB3"
-        )
-
-        // Generar puntos detallados (centros + puertas)
-        val detailedPoints = MapCoordinates.generateFullRoute(roomRoute)
-
-        if (detailedPoints.isNotEmpty()) {
-            currentRoutePoints = detailedPoints
-            overlay.setRoutePixels(detailedPoints)
-            btnContinueRoute.visibility = Button.VISIBLE
-
-            // Log para depuración
-            Log.d(TAG, "=== RUTA REALISTA CON PUERTAS ===")
-            Log.d(TAG, "Habitaciones: $roomRoute")
-            Log.d(TAG, "Puntos generados: ${detailedPoints.size}")
-            detailedPoints.forEachIndexed { i, (x, y) ->
-                Log.d(TAG, "Punto $i: ($x, $y)")
-            }
-
-            Toast.makeText(
-                this,
-                "✅ Ruta realista con ${detailedPoints.size} puntos",
-                Toast.LENGTH_SHORT
-            ).show()
+        if (showingFullRoute) {
+            btnShowFullRoute.text = "Paso a paso"
+            Toast.makeText(this, "Mostrando ruta completa", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(this, "❌ Error generando ruta realista", Toast.LENGTH_SHORT).show()
+            btnShowFullRoute.text = "Ruta completa"
+            Toast.makeText(this, "Mostrando paso ${currentStepIndex + 1} → ${currentStepIndex + 2}", Toast.LENGTH_SHORT).show()
         }
     }
 
-    /**
-     * Prueba simple de overlay (solo centros de habitaciones)
-     */
-    private fun testOverlay() {
-        // Actualizar dimensiones antes de calcular coordenadas escaladas
-        updateMapCoordinatesSize()
+    private fun nextStep() {
+        if (currentStepIndex < currentRoomRoute.size - 1) {
+            currentStepIndex++
+            overlay.setCurrentStep(currentStepIndex)
+            updateMenu()
 
-        // Obtener coordenadas escaladas automáticamente (solo centros)
-        val testPoints = listOf(
-            MapCoordinates.getPixelCoordinates("poi_57fd1fd2-fc14-47fd-b6df-e2f8589a3e7f")!!, // ENTRADA
-            MapCoordinates.getPixelCoordinates("poi_5ab33651-9e9f-444e-8023-c57dce5d276d")!!, // SALON
-            MapCoordinates.getPixelCoordinates("poi_089e6886-f194-4c5c-9e49-43b3c18a43e9")!!, // PASILLO
-            MapCoordinates.getPixelCoordinates("poi_b9f47ce4-59d2-4015-b923-e0d3fab646ea")!!, // HAB1
-            MapCoordinates.getPixelCoordinates("poi_bedbfa50-eeca-40a4-8562-78799e66c2b3")!!, // HAB2
-            MapCoordinates.getPixelCoordinates("poi_f93ff721-4606-45dc-9fcc-bf1d1d00b920")!!  // HAB3
-        )
-
-        currentRoutePoints = testPoints
-        overlay.setRoutePixels(testPoints)
-        btnContinueRoute.visibility = Button.VISIBLE
-
-        // Log para verificar las coordenadas escaladas
-        Log.d(TAG, "=== TEST OVERLAY (Coordenadas escaladas) ===")
-        testPoints.forEachIndexed { i, (x, y) ->
-            Log.d(TAG, "Punto $i: ($x, $y)")
-        }
-
-        Toast.makeText(this, "✅ Ruta de prueba con ${testPoints.size} puntos", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun debugImageSize() {
-        mapImage.post {
-            val drawable = mapImage.drawable
-            if (drawable != null) {
-                val width = drawable.intrinsicWidth
-                val height = drawable.intrinsicHeight
-
-                // Calcular coordenadas escaladas de ejemplo
-                val entradaOriginal = MapCoordinates.getOriginalCoordinates("poi_57fd1fd2-fc14-47fd-b6df-e2f8589a3e7f")
-                val entradaEscalada = MapCoordinates.getPixelCoordinates("poi_57fd1fd2-fc14-47fd-b6df-e2f8589a3e7f")
-
-
-
-                Toast.makeText(this, "Ver Logcat para detalles de escala", Toast.LENGTH_LONG).show()
-            } else {
-                Log.e(TAG, "No se pudo obtener el drawable de la imagen")
-                Toast.makeText(this, "Error: No se pudo obtener la imagen", Toast.LENGTH_SHORT).show()
+            if (!showingFullRoute) {
+                overlay.setShowFullRoute(false)
+                Toast.makeText(this,
+                    "Paso ${currentStepIndex + 1}: ${currentRoomRoute[currentStepIndex]} → ${currentRoomRoute.getOrNull(currentStepIndex + 1) ?: "FIN"}",
+                    Toast.LENGTH_SHORT).show()
             }
+
+            if (currentStepIndex == currentRoomRoute.size - 1) {
+                btnNextStep.isEnabled = false
+                Toast.makeText(this, "🎉 ¡Ruta completada!", Toast.LENGTH_LONG).show()
+            }
+            btnPrevStep.isEnabled = true
         }
+    }
+
+    private fun prevStep() {
+        if (currentStepIndex > 0) {
+            currentStepIndex--
+            overlay.setCurrentStep(currentStepIndex)
+            updateMenu()
+
+            if (!showingFullRoute) {
+                overlay.setShowFullRoute(false)
+                Toast.makeText(this,
+                    "Paso ${currentStepIndex + 1}: ${currentRoomRoute[currentStepIndex]} → ${currentRoomRoute.getOrNull(currentStepIndex + 1) ?: "FIN"}",
+                    Toast.LENGTH_SHORT).show()
+            }
+
+            if (currentStepIndex == 0) {
+                btnPrevStep.isEnabled = false
+            }
+            btnNextStep.isEnabled = true
+        }
+    }
+
+    private fun clearRoute() {
+        currentRoomRoute = emptyList()
+        currentStepIndex = 0
+        showingFullRoute = true
+        overlay.clearRoute()
+        enableNavigationButtons(false)
+        updateMenu()
+        tvRouteProgress.text = "0/0 pasos"
+        btnShowFullRoute.text = "Paso a paso"
+        Toast.makeText(this, "Ruta borrada", Toast.LENGTH_SHORT).show()
     }
 }
-
-private fun MapCoordinates.getOriginalCoordinates(string: String) {}

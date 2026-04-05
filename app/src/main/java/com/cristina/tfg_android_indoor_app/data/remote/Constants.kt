@@ -1,11 +1,11 @@
+// Constants.kt - Ubicación: data/remote/Constants.kt
 package com.cristina.tfg_android_indoor_app.data.remote
 
-private const val LOCAL_PC_IP = "192.168.1.130" // Va cambiando según la conexión
+private const val LOCAL_PC_IP = "192.168.1.130" // Cambia por tu IP local
 private const val LOCAL_PORT_ROOMS = "5001"
 private const val LOCAL_PORT_USERS = "5002"
 
-
-private const val DEPLOY = false;
+private const val DEPLOY = false
 
 private val isEmulator: Boolean =
     (android.os.Build.FINGERPRINT.startsWith("generic")
@@ -24,14 +24,6 @@ val ROOMS_API_BASE_URL: String =
         "https://indoor-tfg-api-rooms.onrender.com"
     else
         "http://$LOCAL_PC_IP:$LOCAL_PORT_ROOMS/"
-
-
-
-// Producción (Render)
-
-// const val USERS_API_BASE_URL = "http://10.0.2.2:5002/"  // Para desarrollo
-// const val USERS_API_BASE_URL = "https://indoor-tfg-api-users.onrender.com/" // Para despliegue
-
 
 val USERS_API_BASE_URL: String =
     if (isEmulator)
