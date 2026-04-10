@@ -2,7 +2,23 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/nav_real_time_occupancy"
+        android:title="Ocupación en tiempo real" />
+
+    <item
+        android:id="@+id/nav_occupancy_history"
+        android:title="Ocupación histórica" />
+
+    <item
+        android:id="@+id/nav_visits_history"
+        android:title="Historial de visitas" />
+
+    <item
         android:id="@+id/action_thresholds"
-        android:title="Configurar umbrales" />
+        android:title="Configuración de umbrales" />
+
+    <item
+        android:id="@+id/config_app"
+        android:title="Configuración de la aplicación" />
 
 </menu>

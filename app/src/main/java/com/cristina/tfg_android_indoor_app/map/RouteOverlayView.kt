@@ -8,6 +8,7 @@ import kotlin.math.*
 
 class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
+    // PAINTS
     private val linePaint = Paint().apply {
         color = Color.MAGENTA
         strokeWidth = 8f
@@ -48,7 +49,7 @@ class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, a
         style = Paint.Style.FILL
     }
 
-    // Marcador de posición actual
+    // POSICIÓN DEL USUARIO
     private var currentPosition: Pair<Float, Float>? = null
     private var currentRoomId: String? = null
     private var pendingConfirmations: Int = 0
@@ -78,6 +79,18 @@ class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, a
         style = Paint.Style.FILL
     }
 
+    // OCUPACIÓN ACTUAL
+    private var occupancyMap: Map<String, Int> = emptyMap()
+
+    private val occupancyPaint = Paint().apply {
+        color = Color.BLACK
+        textSize = 34f
+        isAntiAlias = true
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.DEFAULT_BOLD
+    }
+
+    // RUTAS
     private var fullRoutePoints = emptyList<Pair<Float, Float>>()
     private var currentSegmentPoints = emptyList<Pair<Float, Float>>()
     private var roomPositions = emptyMap<String, Pair<Float, Float>>()
@@ -86,12 +99,18 @@ class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, a
     private var roomOrder = emptyList<String>()
     private var showFullRoute = true
 
+    // MÉTODOS DE CONFIGURACIÓN
+
     fun setTransformMatrix(matrix: Matrix) {
         transformMatrix = matrix
         invalidate()
     }
 
-    fun setFullRoute(routePoints: List<Pair<Float, Float>>, rooms: List<String>, roomCenters: Map<String, Pair<Float, Float>>) {
+    fun setFullRoute(
+        routePoints: List<Pair<Float, Float>>,
+        rooms: List<String>,
+        roomCenters: Map<String, Pair<Float, Float>>
+    ) {
         fullRoutePoints = routePoints
         roomOrder = rooms
         roomPositions = roomCenters
@@ -103,17 +122,13 @@ class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, a
 
     fun setCurrentStep(index: Int) {
         currentStepIndex = index
-        if (!showFullRoute) {
-            updateCurrentSegment()
-        }
+        if (!showFullRoute) updateCurrentSegment()
         invalidate()
     }
 
     fun setShowFullRoute(show: Boolean) {
         showFullRoute = show
-        if (!showFullRoute) {
-            updateCurrentSegment()
-        }
+        if (!showFullRoute) updateCurrentSegment()
         invalidate()
     }
 
@@ -131,15 +146,9 @@ class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, a
         invalidate()
     }
 
-    private fun updateCurrentSegment() {
-        if (roomOrder.isEmpty() || currentStepIndex >= roomOrder.size - 1) {
-            currentSegmentPoints = emptyList()
-            return
-        }
-
-        val fromRoom = roomOrder[currentStepIndex]
-        val toRoom = roomOrder[currentStepIndex + 1]
-        currentSegmentPoints = MapCoordinates.generateRouteBetweenRooms(fromRoom, toRoom)
+    fun updateOccupancy(map: Map<String, Int>) {
+        occupancyMap = map
+        invalidate()
     }
 
     fun clearRoute() {
@@ -152,35 +161,93 @@ class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, a
         invalidate()
     }
 
-    private fun drawArrow(canvas: Canvas, startX: Float, startY: Float, endX: Float, endY: Float) {
-        val angle = atan2((endY - startY).toDouble(), (endX - startX).toDouble())
-        val arrowSize = 25f
-
-        val arrowX = startX + (endX - startX) * 0.7f
-        val arrowY = startY + (endY - startY) * 0.7f
-
-        val arrowPath = Path().apply {
-            val p1x = arrowX + arrowSize * cos(angle + PI - PI / 6).toFloat()
-            val p1y = arrowY + arrowSize * sin(angle + PI - PI / 6).toFloat()
-            val p2x = arrowX + arrowSize * cos(angle + PI + PI / 6).toFloat()
-            val p2y = arrowY + arrowSize * sin(angle + PI + PI / 6).toFloat()
-
-            moveTo(arrowX, arrowY)
-            lineTo(p1x, p1y)
-            lineTo(p2x, p2y)
-            close()
+    private fun updateCurrentSegment() {
+        if (roomOrder.isEmpty() || currentStepIndex >= roomOrder.size - 1) {
+            currentSegmentPoints = emptyList()
+            return
         }
 
-        canvas.drawPath(arrowPath, arrowPaint)
+        val fromRoom = roomOrder[currentStepIndex]
+        val toRoom = roomOrder[currentStepIndex + 1]
+        currentSegmentPoints = MapCoordinates.generateRouteBetweenRooms(fromRoom, toRoom)
     }
 
+    // DIBUJADO
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+
+        // Aplicar zoom/scroll del mapa
+        canvas.save()
+        transformMatrix?.let { canvas.concat(it) }
+
+        drawRoute(canvas)
+        drawRoutePoints(canvas)
+        drawOccupancy(canvas)
+
+        canvas.restore()
+
+        drawCurrentPositionMarker(canvas)
+    }
+
+    // DIBUJAR RUTA
+    private fun drawRoute(canvas: Canvas) {
+        val points = if (showFullRoute) fullRoutePoints else currentSegmentPoints
+        if (points.size < 2) return
+
+        for (i in 0 until points.size - 1) {
+            val (x1, y1) = points[i]
+            val (x2, y2) = points[i + 1]
+            canvas.drawLine(x1, y1, x2, y2, linePaint)
+            drawArrow(canvas, x1, y1, x2, y2)
+        }
+    }
+
+    private fun drawRoutePoints(canvas: Canvas) {
+        roomOrder.forEachIndexed { index, roomId ->
+            val pos = roomPositions[roomId] ?: return@forEachIndexed
+            val (x, y) = pos
+
+            val radius = when {
+                index < currentStepIndex -> 18f
+                index == currentStepIndex -> 22f
+                index == roomOrder.size - 1 -> 18f
+                else -> 14f
+            }
+
+            val paint = when {
+                index < currentStepIndex -> visitedPaint
+                index == currentStepIndex -> startPaint
+                index == roomOrder.size - 1 -> endPaint
+                else -> pointPaint
+            }
+
+            canvas.drawCircle(x, y, radius, paint)
+        }
+    }
+
+    // DIBUJAR OCUPACIÓN
+    private fun drawOccupancy(canvas: Canvas) {
+        occupancyMap.forEach { (room, count) ->
+            val pos = roomPositions[room] ?: return@forEach
+            val (x, y) = pos
+
+            canvas.drawText(
+                count.toString(),
+                x,
+                y - 40f, // encima del punto
+                occupancyPaint
+            )
+        }
+    }
+
+    // DIBUJAR POSICIÓN USUARIO
     private fun drawCurrentPositionMarker(canvas: Canvas) {
         currentPosition?.let { (x, y) ->
+
             canvas.save()
             transformMatrix?.let { canvas.concat(it) }
 
-            if (pendingConfirmations > 0 && pendingConfirmations < 3) {
-                // Círculo pulsante para detecciones pendientes
+            if (pendingConfirmations in 1..2) {
                 val pulseRadius = 25f + (System.currentTimeMillis() % 1000) / 1000f * 10
                 canvas.drawCircle(x, y, pulseRadius, pendingPaint)
                 canvas.drawCircle(x, y, 18f, positionPaint)
@@ -193,8 +260,8 @@ class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, a
                     textAlign = Paint.Align.CENTER
                 }
                 canvas.drawText("$pendingConfirmations/3", x, y + 6, textPaint)
+
             } else {
-                // Posición confirmada
                 canvas.drawCircle(x, y, 22f, shadowPaint)
                 canvas.drawCircle(x, y, 20f, positionPaint)
                 canvas.drawCircle(x, y, 20f, positionStrokePaint)
@@ -219,47 +286,29 @@ class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, a
         }
     }
 
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
+    // ============================
+    // ➤ FLECHAS DE DIRECCIÓN
+    // ============================
 
-        val pointsToDraw = if (showFullRoute) fullRoutePoints else currentSegmentPoints
-        if (pointsToDraw.isNotEmpty()) {
-            canvas.save()
-            transformMatrix?.let { canvas.concat(it) }
+    private fun drawArrow(canvas: Canvas, startX: Float, startY: Float, endX: Float, endY: Float) {
+        val angle = atan2((endY - startY), (endX - startX))
+        val arrowSize = 25f
 
-            if (pointsToDraw.size >= 2) {
-                for (i in 0 until pointsToDraw.size - 1) {
-                    val (x1, y1) = pointsToDraw[i]
-                    val (x2, y2) = pointsToDraw[i + 1]
-                    canvas.drawLine(x1, y1, x2, y2, linePaint)
-                    drawArrow(canvas, x1, y1, x2, y2)
-                }
-            }
+        val arrowX = startX + (endX - startX) * 0.7f
+        val arrowY = startY + (endY - startY) * 0.7f
 
-            roomOrder.forEachIndexed { index, roomId ->
-                val (x, y) = roomPositions[roomId] ?: return@forEachIndexed
-                val radius = when {
-                    index < currentStepIndex -> 18f
-                    index == currentStepIndex -> 22f
-                    index == roomOrder.size - 1 -> 18f
-                    else -> 14f
-                }
+        val path = Path().apply {
+            val p1x = arrowX + arrowSize * cos(angle + Math.PI - Math.PI / 6).toFloat()
+            val p1y = arrowY + arrowSize * sin(angle + Math.PI - Math.PI / 6).toFloat()
+            val p2x = arrowX + arrowSize * cos(angle + Math.PI + Math.PI / 6).toFloat()
+            val p2y = arrowY + arrowSize * sin(angle + Math.PI + Math.PI / 6).toFloat()
 
-                val paint = when {
-                    index < currentStepIndex -> visitedPaint
-                    index == currentStepIndex -> startPaint
-                    index == roomOrder.size - 1 -> endPaint
-                    else -> pointPaint
-                }
-
-                paint.alpha = 255
-                canvas.drawCircle(x, y, radius, paint)
-            }
-
-            canvas.restore()
+            moveTo(arrowX, arrowY)
+            lineTo(p1x, p1y)
+            lineTo(p2x, p2y)
+            close()
         }
 
-        // Dibujar marcador de posición
-        drawCurrentPositionMarker(canvas)
+        canvas.drawPath(path, arrowPaint)
     }
 }

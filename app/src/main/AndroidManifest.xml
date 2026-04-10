@@ -64,6 +64,13 @@
         <activity
             android:name=".training.TrainingAdminActivity" />
 
+        <activity
+            android:name=".OccupancyHistoryActivity" />
+
+        <activity
+            android:name=".ui.admin.AdminVisitsActivity" />
+
+
 
         <service
             android:name=".services.BeaconScanService"

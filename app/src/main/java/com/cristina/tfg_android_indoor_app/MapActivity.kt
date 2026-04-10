@@ -1,5 +1,6 @@
 package com.cristina.tfg_android_indoor_app
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -18,10 +19,12 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.cristina.tfg_android_indoor_app.data.remote.ROOMS_API_BASE_URL
 import com.cristina.tfg_android_indoor_app.data.repository.MLRepository
+import com.cristina.tfg_android_indoor_app.data.repository.RoomRepository
 import com.cristina.tfg_android_indoor_app.map.MapCoordinates
 import com.cristina.tfg_android_indoor_app.map.RouteOverlayView
 import com.cristina.tfg_android_indoor_app.map.ZoomableImageView
 import com.cristina.tfg_android_indoor_app.services.BeaconScanService
+import com.cristina.tfg_android_indoor_app.ui.admin.AdminVisitsActivity
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -46,6 +49,8 @@ class MapActivity : BaseActivity() {
     private var currentStepIndex = 0
     private var showingFullRoute = true
     private var lastKnownRoom: String? = null
+
+    private val roomRepo = RoomRepository()
 
     // Receiver para actualizaciones de posición desde el servicio
     private val positionReceiver = object : BroadcastReceiver() {
@@ -76,11 +81,14 @@ class MapActivity : BaseActivity() {
                             }
                         }
                     }
+
+                    updateOccupancyOnMap()
                 }
             }
         }
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
@@ -89,6 +97,20 @@ class MapActivity : BaseActivity() {
         overlay = findViewById(R.id.routeOverlay)
         drawerLayout = findViewById(R.id.drawerLayout)
         navigationView = findViewById(R.id.navigationView)
+        navigationView.setNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+
+                R.id.nav_real_time_occupancy -> {
+                    updateOccupancyOnMap()
+                    Toast.makeText(this, "Ocupación actualizada", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            drawerLayout.closeDrawer(GravityCompat.START)
+            true
+        }
+
+
         btnMenu = findViewById(R.id.btnMenu)
         btnStartRoute = findViewById(R.id.btnStartRoute)
         btnPrevStep = findViewById(R.id.btnPrevStep)
@@ -130,6 +152,9 @@ class MapActivity : BaseActivity() {
         // Registrar receiver para actualizaciones de posición
         val filter = IntentFilter(BeaconScanService.ACTION_POSITION_UPDATE)
         registerReceiver(positionReceiver, filter)
+
+        // Cargar ocupación inicial al abrir el mapa
+        updateOccupancyOnMap()
     }
 
     override fun onDestroy() {
@@ -138,6 +163,20 @@ class MapActivity : BaseActivity() {
             unregisterReceiver(positionReceiver)
         } catch (e: Exception) {
             Log.e(TAG, "Error unregistering receiver: ${e.message}")
+        }
+    }
+
+    private fun updateOccupancyOnMap() {
+        lifecycleScope.launch {
+            try {
+                val response = roomRepo.getOccupancy()
+                if (response.isSuccessful) {
+                    val occupancy = response.body() ?: emptyMap()
+                    overlay.updateOccupancy(occupancy)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error obteniendo ocupación: ${e.message}")
+            }
         }
     }
 
@@ -156,11 +195,13 @@ class MapActivity : BaseActivity() {
 
     private fun updateMenu() {
         val menu = navigationView.menu
-        menu.clear()
+
+        // Borrar solo el grupo de pasos, no todo el menú
+        menu.removeGroup(R.id.group_route_steps)
 
         currentRoomRoute.forEachIndexed { index, room ->
             val title = "${index + 1}. $room"
-            val item = menu.add(title)
+            val item = menu.add(R.id.group_route_steps, index, index, title)
             item.isCheckable = true
             if (index == currentStepIndex) {
                 item.isChecked = true
@@ -169,6 +210,7 @@ class MapActivity : BaseActivity() {
 
         tvRouteProgress.text = "${currentStepIndex + 1}/${currentRoomRoute.size} pasos"
     }
+
 
     private fun requestRouteFromBackend(forceStart: Boolean = false) {
         val message = if (forceStart) {
@@ -204,8 +246,6 @@ class MapActivity : BaseActivity() {
 
                     for (i in 0 until roomsArray.length()) {
                         val room = roomsArray.getString(i)
-                        // Seguimos filtrando PASILLO como "habitación" de la ruta,
-                        // pero lo usamos internamente en MapCoordinates para el trazado.
                         if (room != "PASILLO") {
                             roomRoute.add(room)
                         }
@@ -236,7 +276,7 @@ class MapActivity : BaseActivity() {
 
                         Toast.makeText(
                             this,
-                            "✅ Ruta desde $startRoom (${roomRoute.size} habitaciones)",
+                            "Ruta desde $startRoom (${roomRoute.size} habitaciones)",
                             Toast.LENGTH_SHORT
                         ).show()
                     } else {
@@ -292,7 +332,7 @@ class MapActivity : BaseActivity() {
 
             if (currentStepIndex == currentRoomRoute.size - 1) {
                 btnNextStep.isEnabled = false
-                Toast.makeText(this, "🎉 ¡Ruta completada!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "¡Ruta completada!", Toast.LENGTH_LONG).show()
             }
             btnPrevStep.isEnabled = true
         }

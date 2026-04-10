@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.cristina.tfg_android_indoor_app.training.TrainingActivity
 import com.cristina.tfg_android_indoor_app.training.TrainingAdminActivity
+import com.cristina.tfg_android_indoor_app.ui.admin.AdminVisitsActivity
 import com.cristina.tfg_android_indoor_app.ui.userlist.UserListActivity
 
 class HomeActivity : BaseActivity() {
@@ -27,6 +28,7 @@ class HomeActivity : BaseActivity() {
 
         val btnUserList = findViewById<Button>(R.id.btnUserList)
         val btnTraining = findViewById<Button>(R.id.btnTraining)
+        val btnVisitsHistory = findViewById<Button>(R.id.btnVisitsHistory)
 
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
         val role = prefs.getString("role", "user")
@@ -34,6 +36,7 @@ class HomeActivity : BaseActivity() {
         if (role == "admin") {
             btnUserList.visibility = View.VISIBLE
             btnTraining.visibility = View.VISIBLE
+            btnVisitsHistory.visibility = View.VISIBLE
         }
 
         btnUserList.setOnClickListener {
@@ -41,11 +44,11 @@ class HomeActivity : BaseActivity() {
         }
 
         btnTraining.setOnClickListener {
-            if (role == "admin") {
-                startActivity(Intent(this, TrainingAdminActivity::class.java))
-            } else {
-                startActivity(Intent(this, TrainingActivity::class.java))
-            }
+            startActivity(Intent(this, TrainingAdminActivity::class.java))
+        }
+
+        btnVisitsHistory.setOnClickListener {
+            startActivity(Intent(this, AdminVisitsActivity::class.java))
         }
     }
 

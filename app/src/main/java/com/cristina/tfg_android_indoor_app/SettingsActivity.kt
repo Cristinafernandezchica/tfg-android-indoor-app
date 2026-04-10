@@ -3,9 +3,7 @@ package com.cristina.tfg_android_indoor_app
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import com.cristina.tfg_android_indoor_app.ui.userlist.UserListActivity
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
 
 class SettingsActivity : BaseActivity() {

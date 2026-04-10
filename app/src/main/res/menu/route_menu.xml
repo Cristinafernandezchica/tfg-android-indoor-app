@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <group android:id="@+id/group_route_steps"
+
+    <!-- Grupo dinámico de pasos de ruta -->
+    <group
+        android:id="@+id/group_route_steps"
         android:checkableBehavior="single" />
+
+    <!-- Opciones fijas debajo de "Mi ruta" -->
+    <item
+        android:id="@+id/nav_real_time_occupancy"
+        android:title="Ocupación en tiempo real" />
+
 </menu>
