@@ -1,18 +1,19 @@
 package com.cristina.tfg_android_indoor_app
 
 import android.Manifest
+import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import com.cristina.tfg_android_indoor_app.training.TrainingActivity
 import com.cristina.tfg_android_indoor_app.training.TrainingAdminActivity
 import com.cristina.tfg_android_indoor_app.ui.userlist.UserListActivity
-import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class HomeActivity : BaseActivity() {
 
@@ -20,8 +21,9 @@ class HomeActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
         bottomNav.selectedItemId = R.id.nav_home
-        // requestAllPermissions() // Permisos necesarios para el uso de la aplicación
-        requestBlePermissionsIfNeeded() // Pedir permisos
+
+        requestBlePermissionsIfNeeded()
+        checkBluetoothEnabled()
 
         val btnUserList = findViewById<Button>(R.id.btnUserList)
         val btnTraining = findViewById<Button>(R.id.btnTraining)
@@ -39,31 +41,14 @@ class HomeActivity : BaseActivity() {
         }
 
         btnTraining.setOnClickListener {
-            startActivity(Intent(this, TrainingActivity::class.java))
+            if (role == "admin") {
+                startActivity(Intent(this, TrainingAdminActivity::class.java))
+            } else {
+                startActivity(Intent(this, TrainingActivity::class.java))
+            }
         }
-
-        btnTraining.setOnClickListener {
-            startActivity(Intent(this, TrainingAdminActivity::class.java))
-        }
-
     }
 
-
-    // Pedir permisos necesarios para usar la aplicación
-    private fun requestAllPermissions() {
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(
-                Manifest.permission.BLUETOOTH_SCAN,
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ),
-            1001
-        )
-    }
-
-    // Funciones para pedir permisos (sin pedirlo siempre, solo si es necesario y aún no los ha dado)
     private fun hasBlePermissions(): Boolean {
         val scan = ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN)
         val connect = ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
@@ -88,6 +73,43 @@ class HomeActivity : BaseActivity() {
         }
     }
 
+    private fun checkBluetoothEnabled() {
+        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter() ?: run {
+            Toast.makeText(this, "Este dispositivo no soporta Bluetooth", Toast.LENGTH_LONG).show()
+            return
+        }
 
+        // Si no tenemos permisos aún, no podemos consultar el estado
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
 
+        if (!bluetoothAdapter.isEnabled) {
+            AlertDialog.Builder(this)
+                .setTitle("Bluetooth desactivado")
+                .setMessage("La aplicación necesita Bluetooth para detectar tu posición en el mapa.")
+                .setPositiveButton("Activar") { _, _ ->
+                    val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                    startActivityForResult(enableBtIntent, 2001)
+                }
+                .setNegativeButton("Cancelar", null)
+                .show()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == 2001) {
+            val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+            if (bluetoothAdapter?.isEnabled == true) {
+                Toast.makeText(this, "Bluetooth activado", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "La app necesita Bluetooth para funcionar correctamente", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 }

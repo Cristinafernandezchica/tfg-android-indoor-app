@@ -28,7 +28,7 @@ class BeaconScanService : android.app.Service() {
     companion object {
         var isServiceRunning = false
         private const val SCAN_INTERVAL_MS = 5000L
-        private const val SCAN_DURATION_MS = 5000L
+        private const val SCAN_DURATION_MS = 9000L
 
         const val ACTION_POSITION_UPDATE = "com.cristina.tfg.POSITION_UPDATE"
         const val EXTRA_ROOM = "room"
@@ -194,7 +194,7 @@ class BeaconScanService : android.app.Service() {
                                 "confirmed",
                                 0
                             )
-                            Log.d("BeaconScanService", "✅ Posición confirmada: ${response.room}")
+                            Log.d("BeaconScanService", "Posición confirmada: ${response.room}")
                         }
                         else -> {
                             Log.d("BeaconScanService", "Respuesta: ${response?.room}")

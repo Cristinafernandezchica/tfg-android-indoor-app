@@ -23,8 +23,6 @@ import com.cristina.tfg_android_indoor_app.map.RouteOverlayView
 import com.cristina.tfg_android_indoor_app.map.ZoomableImageView
 import com.cristina.tfg_android_indoor_app.services.BeaconScanService
 import com.google.android.material.navigation.NavigationView
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -60,25 +58,21 @@ class MapActivity : BaseActivity() {
             when (status) {
                 "pending" -> {
                     room?.let {
-                        if (it != "PASILLO") {
-                            val coordinates = MapCoordinates.getRoomCenter(it)
-                            if (coordinates != null) {
-                                overlay.updateCurrentPosition(it, coordinates, pendingCount)
-                                Log.d(TAG, "🟡 Detectando: $it ($pendingCount/3)")
-                            }
+                        val coordinates = MapCoordinates.getRoomCenter(it)
+                        if (coordinates != null) {
+                            overlay.updateCurrentPosition(it, coordinates, pendingCount)
+                            Log.d(TAG, "Detectando: $it ($pendingCount/3)")
                         }
                     }
                 }
                 "confirmed" -> {
                     room?.let {
-                        if (it != "PASILLO") {
-                            val coordinates = MapCoordinates.getRoomCenter(it)
-                            if (coordinates != null) {
-                                overlay.updateCurrentPosition(it, coordinates, 0)
-                                if (it != lastKnownRoom) {
-                                    lastKnownRoom = it
-                                    Log.d(TAG, "📍 Posición confirmada: $it")
-                                }
+                        val coordinates = MapCoordinates.getRoomCenter(it)
+                        if (coordinates != null) {
+                            overlay.updateCurrentPosition(it, coordinates, 0)
+                            if (it != lastKnownRoom) {
+                                lastKnownRoom = it
+                                Log.d(TAG, "Posición confirmada: $it")
                             }
                         }
                     }
@@ -210,6 +204,8 @@ class MapActivity : BaseActivity() {
 
                     for (i in 0 until roomsArray.length()) {
                         val room = roomsArray.getString(i)
+                        // Seguimos filtrando PASILLO como "habitación" de la ruta,
+                        // pero lo usamos internamente en MapCoordinates para el trazado.
                         if (room != "PASILLO") {
                             roomRoute.add(room)
                         }
@@ -269,7 +265,11 @@ class MapActivity : BaseActivity() {
             Toast.makeText(this, "Mostrando ruta completa", Toast.LENGTH_SHORT).show()
         } else {
             btnShowFullRoute.text = "Ruta completa"
-            Toast.makeText(this, "Mostrando paso ${currentStepIndex + 1} → ${currentStepIndex + 2}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "Mostrando paso ${currentStepIndex + 1} → ${currentStepIndex + 2}",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -281,9 +281,13 @@ class MapActivity : BaseActivity() {
 
             if (!showingFullRoute) {
                 overlay.setShowFullRoute(false)
-                Toast.makeText(this,
-                    "Paso ${currentStepIndex + 1}: ${currentRoomRoute[currentStepIndex]} → ${currentRoomRoute.getOrNull(currentStepIndex + 1) ?: "FIN"}",
-                    Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "Paso ${currentStepIndex + 1}: ${currentRoomRoute[currentStepIndex]} → ${
+                        currentRoomRoute.getOrNull(currentStepIndex + 1) ?: "FIN"
+                    }",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
 
             if (currentStepIndex == currentRoomRoute.size - 1) {
@@ -302,9 +306,13 @@ class MapActivity : BaseActivity() {
 
             if (!showingFullRoute) {
                 overlay.setShowFullRoute(false)
-                Toast.makeText(this,
-                    "Paso ${currentStepIndex + 1}: ${currentRoomRoute[currentStepIndex]} → ${currentRoomRoute.getOrNull(currentStepIndex + 1) ?: "FIN"}",
-                    Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "Paso ${currentStepIndex + 1}: ${currentRoomRoute[currentStepIndex]} → ${
+                        currentRoomRoute.getOrNull(currentStepIndex + 1) ?: "FIN"
+                    }",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
 
             if (currentStepIndex == 0) {
