@@ -31,15 +31,17 @@ object ApiClient {
         .build()
         .create(RoomApi::class.java)
 
-
     val mlApi: MLApi = Retrofit.Builder()
-        .baseUrl(ROOMS_API_BASE_URL)   // misma API que rooms/sensors
+        .baseUrl(ROOMS_API_BASE_URL)
         .client(client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(MLApi::class.java)
 
-
-
+    val positionApi: PositionApi = Retrofit.Builder()
+        .baseUrl(ROOMS_API_BASE_URL)
+        .client(client)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+        .create(PositionApi::class.java)
 }
-

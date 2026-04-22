@@ -77,4 +77,14 @@ class MLRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun sendHeartbeat(userId: String): Result<Unit> {
+        return try {
+            val response = ApiClient.positionApi.sendHeartbeat(mapOf("user_id" to userId))
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception("Error sending heartbeat"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

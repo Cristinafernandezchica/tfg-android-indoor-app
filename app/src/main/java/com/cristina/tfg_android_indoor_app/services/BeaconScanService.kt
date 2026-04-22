@@ -25,6 +25,9 @@ class BeaconScanService : android.app.Service() {
     private var scanRunnable: Runnable? = null
     private val readings = mutableMapOf<String, Int>()
 
+    private var heartbeatRunnable: Runnable? = null
+    private val HEARTBEAT_INTERVAL_MS = 30000L
+
     companion object {
         var isServiceRunning = false
         private const val SCAN_INTERVAL_MS = 5000L
@@ -57,6 +60,7 @@ class BeaconScanService : android.app.Service() {
             isServiceRunning = true
             Log.d("BeaconScanService", "Iniciando escaneo continuo automático")
             startContinuousScan()
+            startHeartbeat()
         }
         return START_STICKY
     }
@@ -222,6 +226,36 @@ class BeaconScanService : android.app.Service() {
         super.onDestroy()
         isServiceRunning = false
         scanRunnable?.let { handler.removeCallbacks(it) }
+        heartbeatRunnable?.let { handler.removeCallbacks(it) }
         Log.d("BeaconScanService", "Servicio detenido")
+    }
+
+
+    private fun startHeartbeat() {
+        heartbeatRunnable = object : Runnable {
+            override fun run() {
+                if (isServiceRunning) {
+                    sendHeartbeat()
+                    handler.postDelayed(this, HEARTBEAT_INTERVAL_MS)
+                }
+            }
+        }
+        handler.post(heartbeatRunnable!!)
+    }
+
+    // Añadir este método
+    private fun sendHeartbeat() {
+        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+        val userId = prefs.getInt("user_id", -1)
+
+        if (userId == -1) return
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                repo.sendHeartbeat(userId.toString())
+            } catch (e: Exception) {
+                Log.e("BeaconScanService", "Error sending heartbeat: ${e.message}")
+            }
+        }
     }
 }
