@@ -18,6 +18,7 @@ class ZoomableImageView(context: Context, attrs: AttributeSet?) : ImageView(cont
     private val mid = PointF()
     private var oldDist = 1f
     private var mode = NONE
+    private var touchListener: ((MotionEvent) -> Boolean)? = null
 
     private var onMatrixChangeListener: ((Matrix) -> Unit)? = null
 
@@ -36,7 +37,19 @@ class ZoomableImageView(context: Context, attrs: AttributeSet?) : ImageView(cont
         onMatrixChangeListener = listener
     }
 
+    fun setOnTouchEventListener(listener: (MotionEvent) -> Boolean) {
+        touchListener = listener
+    }
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        // Primero, dar oportunidad al listener externo (RoomInfoOverlayView)
+        val handledByListener = touchListener?.invoke(event) ?: false
+
+        if (handledByListener) {
+            return true
+        }
+
+        // Si no fue manejado, procesar el zoom/pan normalmente
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
                 savedMatrix.set(matrixState)
@@ -66,12 +79,10 @@ class ZoomableImageView(context: Context, attrs: AttributeSet?) : ImageView(cont
                         }
                     }
                 }
-                // Notificar cambio de matriz
                 onMatrixChangeListener?.invoke(matrixState)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
                 mode = NONE
-                // Notificar cambio final
                 onMatrixChangeListener?.invoke(matrixState)
             }
         }

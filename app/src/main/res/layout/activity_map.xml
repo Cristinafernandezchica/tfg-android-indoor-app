@@ -26,6 +26,14 @@
             android:layout_height="match_parent"
             android:elevation="20dp" />
 
+        <!-- Capa para los iconos interactivos de las habitaciones -->
+        <com.cristina.tfg_android_indoor_app.map.RoomInfoOverlayView
+            android:id="@+id/roomInfoOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clickable="false"
+            android:focusable="false" />
+
         <!-- Botón para abrir menú lateral -->
         <ImageButton
             android:id="@+id/btnMenu"

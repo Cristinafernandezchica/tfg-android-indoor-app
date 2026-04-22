@@ -11,6 +11,7 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
@@ -21,6 +22,7 @@ import com.cristina.tfg_android_indoor_app.data.remote.ROOMS_API_BASE_URL
 import com.cristina.tfg_android_indoor_app.data.repository.MLRepository
 import com.cristina.tfg_android_indoor_app.data.repository.RoomRepository
 import com.cristina.tfg_android_indoor_app.map.MapCoordinates
+import com.cristina.tfg_android_indoor_app.map.RoomInfoOverlayView
 import com.cristina.tfg_android_indoor_app.map.RouteOverlayView
 import com.cristina.tfg_android_indoor_app.map.ZoomableImageView
 import com.cristina.tfg_android_indoor_app.services.BeaconScanService
@@ -43,6 +45,7 @@ class MapActivity : BaseActivity() {
     private lateinit var btnClearRoute: Button
     private lateinit var btnForceStart: Button
     private lateinit var tvRouteProgress: TextView
+    private lateinit var roomInfoOverlay: RoomInfoOverlayView
 
     private val TAG = "MAP_ACTIVITY"
     private var currentRoomRoute = emptyList<String>()
@@ -93,23 +96,12 @@ class MapActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
 
+        // 1. INICIALIZAR TODAS LAS VISTAS PRIMERO
         mapImage = findViewById(R.id.mapImage)
         overlay = findViewById(R.id.routeOverlay)
+        roomInfoOverlay = findViewById(R.id.roomInfoOverlay)
         drawerLayout = findViewById(R.id.drawerLayout)
         navigationView = findViewById(R.id.navigationView)
-        navigationView.setNavigationItemSelectedListener { item ->
-            when (item.itemId) {
-
-                R.id.nav_real_time_occupancy -> {
-                    updateOccupancyOnMap()
-                    Toast.makeText(this, "Ocupación actualizada", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            drawerLayout.closeDrawer(GravityCompat.START)
-            true
-        }
-
 
         btnMenu = findViewById(R.id.btnMenu)
         btnStartRoute = findViewById(R.id.btnStartRoute)
@@ -121,6 +113,18 @@ class MapActivity : BaseActivity() {
 
         val headerView = navigationView.getHeaderView(0)
         tvRouteProgress = headerView.findViewById(R.id.tvRouteProgress)
+
+        // 2. CONFIGURAR LISTENERS
+        navigationView.setNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_real_time_occupancy -> {
+                    updateOccupancyOnMap()
+                    Toast.makeText(this, "Ocupación actualizada", Toast.LENGTH_SHORT).show()
+                }
+            }
+            drawerLayout.closeDrawer(GravityCompat.START)
+            true
+        }
 
         btnMenu.setOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
@@ -140,20 +144,37 @@ class MapActivity : BaseActivity() {
 
         enableNavigationButtons(false)
 
+        mapImage.setOnTouchEventListener { event ->
+            roomInfoOverlay.handleTouch(event)
+        }
+
+        // 3. CONFIGURAR MATRIZ DE TRANSFORMACIÓN
         mapImage.setOnMatrixChangeListener { matrix ->
             overlay.setTransformMatrix(matrix)
+            roomInfoOverlay.setTransformMatrix(matrix)
         }
+
 
         mapImage.post {
-            overlay.setTransformMatrix(mapImage.getCurrentMatrix())
+            val matrix = mapImage.getCurrentMatrix()
+            overlay.setTransformMatrix(matrix)
+            roomInfoOverlay.setTransformMatrix(matrix)
             updateMapCoordinatesSize()
+            val drawable = mapImage.drawable
+            if (drawable != null) {
+                roomInfoOverlay.updateDimensions(drawable.intrinsicWidth, drawable.intrinsicHeight)
+            }
         }
 
-        // Registrar receiver para actualizaciones de posición
+        // 4. CONFIGURAR LISTENER DE ICONOS
+        roomInfoOverlay.setOnRoomInfoClickListener { roomId ->
+            showRoomInfoDialog(roomId)
+        }
+
+        // 5. REGISTRAR RECEIVER Y CARGAR OCUPACIÓN INICIAL
         val filter = IntentFilter(BeaconScanService.ACTION_POSITION_UPDATE)
         registerReceiver(positionReceiver, filter)
 
-        // Cargar ocupación inicial al abrir el mapa
         updateOccupancyOnMap()
     }
 
@@ -373,5 +394,49 @@ class MapActivity : BaseActivity() {
         tvRouteProgress.text = "0/0 pasos"
         btnShowFullRoute.text = "Paso a paso"
         Toast.makeText(this, "Ruta borrada", Toast.LENGTH_SHORT).show()
+    }
+
+
+    @SuppressLint("MissingInflatedId")
+    private fun showRoomInfoDialog(roomId: String) {
+        lifecycleScope.launch {
+            try {
+                // Obtener información de la habitación desde la API
+                val response = roomRepo.getRooms()
+                if (!response.isSuccessful) {
+                    Toast.makeText(this@MapActivity, "Error cargando información", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                val rooms = response.body() ?: emptyList()
+                val room = rooms.find { it.room_id == roomId }
+
+                // Obtener ocupación actual
+                val occupancyResponse = roomRepo.getOccupancy()
+                val occupancyMap = if (occupancyResponse.isSuccessful) occupancyResponse.body() ?: emptyMap() else emptyMap()
+                val currentOccupancy = occupancyMap[roomId] ?: room?.current_occupancy ?: 0
+
+                // Mostrar diálogo
+                val dialogView = layoutInflater.inflate(R.layout.dialog_room_info, null)
+                val tvRoomName = dialogView.findViewById<TextView>(R.id.tvRoomName)
+                val tvRoomId = dialogView.findViewById<TextView>(R.id.tvRoomId)
+                val tvDescription = dialogView.findViewById<TextView>(R.id.tvDescription)
+                val tvOccupancy = dialogView.findViewById<TextView>(R.id.tvOccupancy)
+
+                tvRoomName.text = room?.name ?: roomId
+                tvRoomId.text = "ID: $roomId"
+                tvDescription.text = room?.description ?: "Sin descripción disponible"
+                tvOccupancy.text = "Ocupación actual: $currentOccupancy personas"
+
+                AlertDialog.Builder(this@MapActivity)
+                    .setView(dialogView)
+                    .setPositiveButton("Cerrar", null)
+                    .show()
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error mostrando info: ${e.message}")
+                Toast.makeText(this@MapActivity, "Error cargando información", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
