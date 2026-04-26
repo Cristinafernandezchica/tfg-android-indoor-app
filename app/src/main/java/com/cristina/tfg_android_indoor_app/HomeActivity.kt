@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import com.cristina.tfg_android_indoor_app.training.TrainingActivity
 import com.cristina.tfg_android_indoor_app.training.TrainingAdminActivity
 import com.cristina.tfg_android_indoor_app.ui.admin.AdminVisitsActivity
+import com.cristina.tfg_android_indoor_app.ui.admin.EditRoomsActivity
 import com.cristina.tfg_android_indoor_app.ui.userlist.UserListActivity
 
 class HomeActivity : BaseActivity() {
@@ -29,14 +30,17 @@ class HomeActivity : BaseActivity() {
         val btnUserList = findViewById<Button>(R.id.btnUserList)
         val btnTraining = findViewById<Button>(R.id.btnTraining)
         val btnVisitsHistory = findViewById<Button>(R.id.btnVisitsHistory)
+        val btnEditRooms = findViewById<Button>(R.id.btnEditRooms)  // ← NUEVO
 
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
         val role = prefs.getString("role", "user")
+        val isAdmin = role == "admin"
 
-        if (role == "admin") {
+        if (isAdmin) {
             btnUserList.visibility = View.VISIBLE
             btnTraining.visibility = View.VISIBLE
             btnVisitsHistory.visibility = View.VISIBLE
+            btnEditRooms.visibility = View.VISIBLE  // ← NUEVO
         }
 
         btnUserList.setOnClickListener {
@@ -49,6 +53,10 @@ class HomeActivity : BaseActivity() {
 
         btnVisitsHistory.setOnClickListener {
             startActivity(Intent(this, AdminVisitsActivity::class.java))
+        }
+
+        btnEditRooms.setOnClickListener {
+            startActivity(Intent(this, EditRoomsActivity::class.java))
         }
     }
 
@@ -82,7 +90,6 @@ class HomeActivity : BaseActivity() {
             return
         }
 
-        // Si no tenemos permisos aún, no podemos consultar el estado
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
             != PackageManager.PERMISSION_GRANTED

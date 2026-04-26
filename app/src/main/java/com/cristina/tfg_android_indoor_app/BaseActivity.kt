@@ -1,4 +1,3 @@
-// BaseActivity.kt
 package com.cristina.tfg_android_indoor_app
 
 import android.content.Intent
@@ -10,6 +9,7 @@ import androidx.lifecycle.lifecycleScope
 import com.cristina.tfg_android_indoor_app.data.repository.RoomRepository
 import com.cristina.tfg_android_indoor_app.map.RouteOverlayView
 import com.cristina.tfg_android_indoor_app.ui.admin.AdminVisitsActivity
+import com.cristina.tfg_android_indoor_app.ui.admin.EditRoomsActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
@@ -35,7 +35,6 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     override fun setContentView(layoutResID: Int) {
-        // Inflamos el layout hijo dentro de contentContainer
         val base = layoutInflater.inflate(R.layout.activity_base, null)
         val container = base.findViewById<android.widget.FrameLayout>(R.id.contentContainer)
         layoutInflater.inflate(layoutResID, container, true)
@@ -49,23 +48,20 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     private fun setupTopBar() {
-
-        // Menú de la izquierda (más opciones)
         topAppBar.setNavigationOnClickListener { view ->
             val popup = androidx.appcompat.widget.PopupMenu(this, view)
             popup.menuInflater.inflate(R.menu.top_nav_more_menu, popup.menu)
 
             val prefs = getSharedPreferences("auth", MODE_PRIVATE)
             val role = prefs.getString("role", "user")
+            val isAdmin = role == "admin"
 
-            if (role != "admin") {
-                popup.menu.findItem(R.id.nav_visits_history)?.isVisible = false
-            }
+            // Mostrar/ocultar opciones según rol
+            popup.menu.findItem(R.id.nav_visits_history)?.isVisible = isAdmin
+            popup.menu.findItem(R.id.nav_edit_rooms)?.isVisible = isAdmin  // ← AÑADIDO
 
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
-
-                    // Ocupación en tiempo real
                     R.id.nav_real_time_occupancy -> {
                         if (this is MapActivity) {
                             this.updateOccupancyOnMap()
@@ -76,50 +72,40 @@ open class BaseActivity : AppCompatActivity() {
                         }
                         true
                     }
-
-                    // Ocupación histórica
                     R.id.nav_occupancy_history -> {
                         startActivity(Intent(this, OccupancyHistoryActivity::class.java))
                         true
                     }
-
-                    // Historial de visitas (solo admin)
                     R.id.nav_visits_history -> {
                         startActivity(Intent(this, AdminVisitsActivity::class.java))
                         true
                     }
-
-                    // Configuración de umbrales
                     R.id.action_thresholds -> {
                         startActivity(Intent(this, ThresholdSettingsActivity::class.java))
                         true
                     }
-
-                    // Configuración aplicación
                     R.id.config_app -> {
                         startActivity(Intent(this, SettingsActivity::class.java))
                         true
                     }
-
+                    R.id.nav_edit_rooms -> {  // ← MOVIDO DENTRO DEL when
+                        startActivity(Intent(this, EditRoomsActivity::class.java))
+                        true
+                    }
                     else -> false
                 }
             }
-
             popup.show()
         }
 
-
-        // Botón de logout
         topAppBar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.action_logout -> {
                     val prefs = getSharedPreferences("auth", MODE_PRIVATE)
                     prefs.edit().clear().apply()
-
                     val intent = Intent(this, LoginActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
-
                     true
                 }
                 else -> false
@@ -127,9 +113,6 @@ open class BaseActivity : AppCompatActivity() {
         }
     }
 
-
-
-    // Configuración del NavBar Inferior
     private fun setupBottomNav() {
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
         val role = prefs.getString("role", "user")

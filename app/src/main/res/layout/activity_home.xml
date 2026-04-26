@@ -26,7 +26,7 @@
         android:layout_height="wrap_content"
         android:text="Modo entrenamiento"
         android:visibility="gone"
-        android:layout_marginTop="20dp"/>
+        android:layout_marginTop="140dp"/>
 
     <Button
         android:id="@+id/btnVisitsHistory"
@@ -34,10 +34,14 @@
         android:layout_height="wrap_content"
         android:text="Histórico de visitas"
         android:visibility="gone"
-        android:layout_marginTop="140dp"/>
+        android:layout_marginTop="200dp"/>
 
-
-
-
+    <Button
+        android:id="@+id/btnEditRooms"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Editar habitaciones"
+        android:visibility="gone"
+        android:layout_marginTop="260dp"/>
 
 </FrameLayout>

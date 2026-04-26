@@ -5,7 +5,9 @@ import com.cristina.tfg_android_indoor_app.data.model.dto.ZoneDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -37,5 +39,18 @@ interface RoomApi {
         @Query("room_id") roomId: String,
         @Query("at") timestamp: String
     ): Response<OccupancyResponse>
+
+    @GET("rooms/admin/list")
+    suspend fun adminGetAllRooms(): Response<List<RoomDto>>
+
+    @GET("rooms/{roomId}")
+    suspend fun getRoom(@Path("roomId") roomId: String): Response<RoomDto>
+
+    @PUT("rooms/{roomId}")
+    suspend fun updateRoom(
+        @Header("Authorization") token: String,
+        @Path("roomId") roomId: String,
+        @Body room: RoomDto
+    ): Response<RoomDto>
 
 }
