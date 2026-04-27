@@ -38,12 +38,14 @@
     </style>
 
     <!-- Botón -->
+    <!--
     <style name="Widget.Modern.Button" parent="Widget.MaterialComponents.Button">
         <item name="android:padding">14dp</item>
         <item name="cornerRadius">12dp</item>
         <item name="android:textAllCaps">false</item>
         <item name="android:textSize">16sp</item>
     </style>
+    -->
 
     <!-- Tarjeta -->
     <style name="Widget.Modern.Card" parent="Widget.MaterialComponents.CardView">
@@ -56,6 +58,40 @@
     <style name="ThemeOverlay.ModernDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
         <item name="materialAlertDialogBodyTextStyle">@style/TextAppearance.MaterialComponents.Body1</item>
         <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.MaterialComponents.Headline6</item>
+    </style>
+
+    <style name="Widget.Modern.Button" parent="Widget.Material3.Button">
+        <item name="android:padding">8dp</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="Widget.Modern.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:padding">8dp</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:singleLine">true</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="strokeColor">?attr/colorPrimary</item>
+    </style>
+
+    <style name="Widget.Modern.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="android:padding">4dp</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:singleLine">true</item>
+        <item name="iconPadding">4dp</item>
+        <item name="iconSize">16dp</item>
     </style>
 
 

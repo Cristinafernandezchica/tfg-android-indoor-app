@@ -7,8 +7,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
-import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -19,14 +20,14 @@ import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.cristina.tfg_android_indoor_app.data.remote.ROOMS_API_BASE_URL
-import com.cristina.tfg_android_indoor_app.data.repository.MLRepository
 import com.cristina.tfg_android_indoor_app.data.repository.RoomRepository
 import com.cristina.tfg_android_indoor_app.map.MapCoordinates
 import com.cristina.tfg_android_indoor_app.map.RoomInfoOverlayView
 import com.cristina.tfg_android_indoor_app.map.RouteOverlayView
 import com.cristina.tfg_android_indoor_app.map.ZoomableImageView
 import com.cristina.tfg_android_indoor_app.services.BeaconScanService
-import com.cristina.tfg_android_indoor_app.ui.admin.AdminVisitsActivity
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -37,7 +38,7 @@ class MapActivity : BaseActivity() {
     private lateinit var overlay: RouteOverlayView
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
-    private lateinit var btnMenu: ImageButton
+    private lateinit var btnMenu: FloatingActionButton
     private lateinit var btnStartRoute: Button
     private lateinit var btnPrevStep: Button
     private lateinit var btnNextStep: Button
@@ -46,6 +47,13 @@ class MapActivity : BaseActivity() {
     private lateinit var btnForceStart: Button
     private lateinit var tvRouteProgress: TextView
     private lateinit var roomInfoOverlay: RoomInfoOverlayView
+    private lateinit var layoutStepNavigation: LinearLayout
+    private lateinit var tvStepCounter: TextView
+
+    // Bottom Sheet
+    private lateinit var bottomSheet: View
+    private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
+    private lateinit var btnShowPanel: FloatingActionButton
 
     private val TAG = "MAP_ACTIVITY"
     private var currentRoomRoute = emptyList<String>()
@@ -84,7 +92,6 @@ class MapActivity : BaseActivity() {
                             }
                         }
                     }
-
                     updateOccupancyOnMap()
                 }
             }
@@ -96,7 +103,31 @@ class MapActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
 
-        // 1. INICIALIZAR TODAS LAS VISTAS PRIMERO
+        // 1. INICIALIZAR TODAS LAS VISTAS
+        initializeViews()
+
+        // 2. CONFIGURAR LISTENERS
+        setupListeners()
+
+        // 3. CONFIGURAR MAPA Y OVERLAYS
+        setupMapAndOverlays()
+
+        // 4. CONFIGURAR BOTTOM SHEET
+        setupBottomSheet()
+
+        // 5. CONFIGURAR LISTENER DE ICONOS
+        roomInfoOverlay.setOnRoomInfoClickListener { roomId ->
+            showRoomInfoDialog(roomId)
+        }
+
+        // 6. REGISTRAR RECEIVER Y CARGAR OCUPACIÓN INICIAL
+        val filter = IntentFilter(BeaconScanService.ACTION_POSITION_UPDATE)
+        registerReceiver(positionReceiver, filter)
+
+        updateOccupancyOnMap()
+    }
+
+    private fun initializeViews() {
         mapImage = findViewById(R.id.mapImage)
         overlay = findViewById(R.id.routeOverlay)
         roomInfoOverlay = findViewById(R.id.roomInfoOverlay)
@@ -111,10 +142,21 @@ class MapActivity : BaseActivity() {
         btnClearRoute = findViewById(R.id.btnClearRoute)
         btnForceStart = findViewById(R.id.btnForceStart)
 
+        layoutStepNavigation = findViewById(R.id.layoutStepNavigation)
+        tvStepCounter = findViewById(R.id.tvStepCounter)
+
+        // Bottom Sheet views
+        bottomSheet = findViewById(R.id.bottomSheet)
+        btnShowPanel = findViewById(R.id.btnShowPanel)
+
         val headerView = navigationView.getHeaderView(0)
         tvRouteProgress = headerView.findViewById(R.id.tvRouteProgress)
 
-        // 2. CONFIGURAR LISTENERS
+        // Estado inicial: navegación de pasos oculta
+        layoutStepNavigation.visibility = View.GONE
+    }
+
+    private fun setupListeners() {
         navigationView.setNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_real_time_occupancy -> {
@@ -142,18 +184,16 @@ class MapActivity : BaseActivity() {
             requestRouteFromBackend(forceStart = true)
         }
 
-        enableNavigationButtons(false)
-
         mapImage.setOnTouchEventListener { event ->
             roomInfoOverlay.handleTouch(event)
         }
+    }
 
-        // 3. CONFIGURAR MATRIZ DE TRANSFORMACIÓN
+    private fun setupMapAndOverlays() {
         mapImage.setOnMatrixChangeListener { matrix ->
             overlay.setTransformMatrix(matrix)
             roomInfoOverlay.setTransformMatrix(matrix)
         }
-
 
         mapImage.post {
             val matrix = mapImage.getCurrentMatrix()
@@ -165,17 +205,47 @@ class MapActivity : BaseActivity() {
                 roomInfoOverlay.updateDimensions(drawable.intrinsicWidth, drawable.intrinsicHeight)
             }
         }
+    }
 
-        // 4. CONFIGURAR LISTENER DE ICONOS
-        roomInfoOverlay.setOnRoomInfoClickListener { roomId ->
-            showRoomInfoDialog(roomId)
+    private fun setupBottomSheet() {
+        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+
+        // Configurar comportamiento
+        bottomSheetBehavior.peekHeight = 100 // Altura cuando está contraído
+        bottomSheetBehavior.isHideable = true // Permitir ocultar completamente
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED // Estado inicial: expandido
+
+        // Listener para cambios de estado
+        bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+            override fun onStateChanged(bottomSheet: View, newState: Int) {
+                when (newState) {
+                    BottomSheetBehavior.STATE_HIDDEN -> {
+                        // Panel completamente oculto
+                        btnShowPanel.visibility = View.VISIBLE
+                        btnShowPanel.show()
+                    }
+                    BottomSheetBehavior.STATE_COLLAPSED -> {
+                        // Panel contraído (solo se ve el handle)
+                        btnShowPanel.visibility = View.GONE
+                    }
+                    BottomSheetBehavior.STATE_EXPANDED -> {
+                        // Panel expandido
+                        btnShowPanel.visibility = View.GONE
+                    }
+                }
+            }
+
+            override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                // Animación opcional del botón flotante
+                btnShowPanel.alpha = 1 - slideOffset
+            }
+        })
+
+        // Botón flotante para mostrar el panel cuando está oculto
+        btnShowPanel.setOnClickListener {
+            bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
+            btnShowPanel.visibility = View.GONE
         }
-
-        // 5. REGISTRAR RECEIVER Y CARGAR OCUPACIÓN INICIAL
-        val filter = IntentFilter(BeaconScanService.ACTION_POSITION_UPDATE)
-        registerReceiver(positionReceiver, filter)
-
-        updateOccupancyOnMap()
     }
 
     override fun onDestroy() {
@@ -208,16 +278,18 @@ class MapActivity : BaseActivity() {
         }
     }
 
-    private fun enableNavigationButtons(enabled: Boolean) {
-        btnPrevStep.isEnabled = enabled
-        btnNextStep.isEnabled = enabled
-        btnShowFullRoute.isEnabled = enabled
-    }
-
     private fun updateMenu() {
         val menu = navigationView.menu
 
-        // Borrar solo el grupo de pasos, no todo el menú
+        // Mostrar/ocultar navegación de pasos según si hay ruta
+        val hasRoute = currentRoomRoute.isNotEmpty()
+        layoutStepNavigation.visibility = if (hasRoute) View.VISIBLE else View.GONE
+
+        if (hasRoute) {
+            tvStepCounter.text = "Paso ${currentStepIndex + 1}/${currentRoomRoute.size}"
+        }
+
+        // Actualizar el menú lateral
         menu.removeGroup(R.id.group_route_steps)
 
         currentRoomRoute.forEachIndexed { index, room ->
@@ -230,8 +302,12 @@ class MapActivity : BaseActivity() {
         }
 
         tvRouteProgress.text = "${currentStepIndex + 1}/${currentRoomRoute.size} pasos"
-    }
 
+        // Actualizar estados de botones de navegación
+        btnPrevStep.isEnabled = currentStepIndex > 0
+        btnNextStep.isEnabled = currentStepIndex < currentRoomRoute.size - 1
+        btnShowFullRoute.isEnabled = hasRoute
+    }
 
     private fun requestRouteFromBackend(forceStart: Boolean = false) {
         val message = if (forceStart) {
@@ -289,7 +365,6 @@ class MapActivity : BaseActivity() {
                         overlay.setCurrentStep(0)
                         overlay.setShowFullRoute(true)
 
-                        enableNavigationButtons(true)
                         updateMenu()
                         btnShowFullRoute.text = "Paso a paso"
 
@@ -352,10 +427,8 @@ class MapActivity : BaseActivity() {
             }
 
             if (currentStepIndex == currentRoomRoute.size - 1) {
-                btnNextStep.isEnabled = false
                 Toast.makeText(this, "¡Ruta completada!", Toast.LENGTH_LONG).show()
             }
-            btnPrevStep.isEnabled = true
         }
     }
 
@@ -375,11 +448,6 @@ class MapActivity : BaseActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
-
-            if (currentStepIndex == 0) {
-                btnPrevStep.isEnabled = false
-            }
-            btnNextStep.isEnabled = true
         }
     }
 
@@ -389,19 +457,17 @@ class MapActivity : BaseActivity() {
         showingFullRoute = true
         overlay.clearRoute()
         overlay.clearCurrentPosition()
-        enableNavigationButtons(false)
         updateMenu()
         tvRouteProgress.text = "0/0 pasos"
         btnShowFullRoute.text = "Paso a paso"
+        btnShowFullRoute.isEnabled = false
         Toast.makeText(this, "Ruta borrada", Toast.LENGTH_SHORT).show()
     }
-
 
     @SuppressLint("MissingInflatedId")
     private fun showRoomInfoDialog(roomId: String) {
         lifecycleScope.launch {
             try {
-                // Obtener información de la habitación desde la API
                 val response = roomRepo.getRooms()
                 if (!response.isSuccessful) {
                     Toast.makeText(this@MapActivity, "Error cargando información", Toast.LENGTH_SHORT).show()
@@ -411,12 +477,10 @@ class MapActivity : BaseActivity() {
                 val rooms = response.body() ?: emptyList()
                 val room = rooms.find { it.room_id == roomId }
 
-                // Obtener ocupación actual
                 val occupancyResponse = roomRepo.getOccupancy()
                 val occupancyMap = if (occupancyResponse.isSuccessful) occupancyResponse.body() ?: emptyMap() else emptyMap()
                 val currentOccupancy = occupancyMap[roomId] ?: room?.current_occupancy ?: 0
 
-                // Mostrar diálogo
                 val dialogView = layoutInflater.inflate(R.layout.dialog_room_info, null)
                 val tvRoomName = dialogView.findViewById<TextView>(R.id.tvRoomName)
                 val tvRoomId = dialogView.findViewById<TextView>(R.id.tvRoomId)
