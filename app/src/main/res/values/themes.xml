@@ -105,5 +105,27 @@
         <item name="android:textColorHint">#9E9E9E</item>
     </style>
 
+    <style name="Widget.Modern.Button.Icon" parent="Widget.Material3.Button.IconButton">
+        <item name="cornerRadius">18dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:padding">8dp</item>
+    </style>
+
+    <style name="Widget.Modern.TextInputLayout.Outlined" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">28dp</item>
+        <item name="boxCornerRadiusTopEnd">28dp</item>
+        <item name="boxCornerRadiusBottomStart">28dp</item>
+        <item name="boxCornerRadiusBottomEnd">28dp</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeColor">?attr/colorPrimary</item>
+        <item name="android:textColorHint">#9E9E9E</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.App.Corner.Cut" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
 
 </resources>

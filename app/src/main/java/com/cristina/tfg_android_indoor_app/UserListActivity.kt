@@ -1,51 +1,46 @@
 package com.cristina.tfg_android_indoor_app.ui.userlist
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cristina.tfg_android_indoor_app.BaseActivity
-import com.cristina.tfg_android_indoor_app.HomeActivity
-import com.cristina.tfg_android_indoor_app.MapActivity
-import com.cristina.tfg_android_indoor_app.ProfileActivity
 import com.cristina.tfg_android_indoor_app.R
-import com.cristina.tfg_android_indoor_app.SettingsActivity
 import com.cristina.tfg_android_indoor_app.data.model.UserListItem
 import com.cristina.tfg_android_indoor_app.data.repository.AuthRepository
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.launch
 
 class UserListActivity : BaseActivity() {
 
     private val authRepository = AuthRepository()
-
-    // Lista mutable para poder actualizarla
     private val users = mutableListOf<UserListItem>()
-
-    // Adapter único reutilizable
     private lateinit var adapter: UserAdapter
+    private lateinit var tvUserCount: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_user_list)
         bottomNav.selectedItemId = R.id.nav_user_list
 
+        // Ocultar top app bar personalizada y usar la nuestra
+        hideTopAppBar()
 
         val rvUsers = findViewById<RecyclerView>(R.id.rvUsers)
         val etSearch = findViewById<EditText>(R.id.etSearch)
+        tvUserCount = findViewById(R.id.tvUserCount)
 
         rvUsers.layoutManager = LinearLayoutManager(this)
 
         val token = getSharedPreferences("auth", MODE_PRIVATE)
             .getString("token", "") ?: ""
 
-        // Inicializamos el adapter una sola vez
         adapter = UserAdapter(
             users,
             onDelete = { id -> deleteUser(id, token) },
@@ -55,7 +50,6 @@ class UserListActivity : BaseActivity() {
 
         rvUsers.adapter = adapter
 
-        // Función para cargar usuarios y refrescar la lista
         fun loadUsers(query: String = "") {
             lifecycleScope.launch {
                 val result = authRepository.getUsers(token, query)
@@ -63,6 +57,7 @@ class UserListActivity : BaseActivity() {
                     users.clear()
                     users.addAll(newUsers)
                     adapter.notifyDataSetChanged()
+                    tvUserCount.text = "${users.size} ${if (users.size == 1) "usuario" else "usuarios"}"
                 }.onFailure {
                     Toast.makeText(this@UserListActivity, "Error cargando usuarios", Toast.LENGTH_SHORT).show()
                 }
@@ -74,32 +69,41 @@ class UserListActivity : BaseActivity() {
         etSearch.addTextChangedListener {
             loadUsers(it.toString())
         }
-
     }
 
     private fun deleteUser(id: Int, token: String) {
-        lifecycleScope.launch {
-            val result = authRepository.deleteUser(token, id)
-            result.onSuccess {
-                Toast.makeText(this@UserListActivity, "Usuario eliminado", Toast.LENGTH_SHORT).show()
-                reload()
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Eliminar usuario")
+            .setMessage("¿Estás seguro de que quieres eliminar este usuario?")
+            .setPositiveButton("Eliminar") { _, _ ->
+                lifecycleScope.launch {
+                    val result = authRepository.deleteUser(token, id)
+                    result.onSuccess {
+                        Toast.makeText(this@UserListActivity, "Usuario eliminado", Toast.LENGTH_SHORT).show()
+                        reload()
+                    }.onFailure {
+                        Toast.makeText(this@UserListActivity, "Error al eliminar", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
-        }
+            .setNegativeButton("Cancelar", null)
+            .show()
     }
 
     private fun resetPassword(id: Int, token: String) {
         val editText = EditText(this)
         editText.hint = "Nueva contraseña"
+        editText.inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
 
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Cambiar contraseña")
             .setMessage("Introduce la nueva contraseña para este usuario")
             .setView(editText)
-            .setPositiveButton("Aceptar") { _, _ ->
+            .setPositiveButton("Guardar") { _, _ ->
                 val newPassword = editText.text.toString()
 
-                if (newPassword.isBlank()) {
-                    Toast.makeText(this, "La contraseña no puede estar vacía", Toast.LENGTH_SHORT).show()
+                if (newPassword.length < 6) {
+                    Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
 
@@ -119,11 +123,15 @@ class UserListActivity : BaseActivity() {
 
     private fun changeRole(id: Int, token: String) {
         val roles = arrayOf("user", "admin")
+        val selected = intArrayOf(0)
 
-        AlertDialog.Builder(this)
+        MaterialAlertDialogBuilder(this)
             .setTitle("Cambiar rol")
-            .setItems(roles) { _, which ->
-                val selectedRole = roles[which]
+            .setSingleChoiceItems(roles, selected[0]) { _, which ->
+                selected[0] = which
+            }
+            .setPositiveButton("Cambiar") { _, _ ->
+                val selectedRole = roles[selected[0]]
 
                 lifecycleScope.launch {
                     val result = authRepository.changeRole(token, id, selectedRole)
@@ -135,10 +143,10 @@ class UserListActivity : BaseActivity() {
                     }
                 }
             }
+            .setNegativeButton("Cancelar", null)
             .show()
     }
 
-    // Función auxiliar para recargar la lista
     private fun reload() {
         val token = getSharedPreferences("auth", MODE_PRIVATE)
             .getString("token", "") ?: ""
@@ -149,6 +157,7 @@ class UserListActivity : BaseActivity() {
                 users.clear()
                 users.addAll(newUsers)
                 adapter.notifyDataSetChanged()
+                tvUserCount.text = "${users.size} ${if (users.size == 1) "usuario" else "usuarios"}"
             }
         }
     }
