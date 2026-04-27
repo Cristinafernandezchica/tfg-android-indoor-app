@@ -15,12 +15,12 @@ class RoomInfoOverlayView(context: Context, attrs: AttributeSet?) : View(context
     }
 
     private val roomInfoPoints = mapOf(
-        "ENTRADA" to Pair(62f + 30f, 940f),
-        "SALON" to Pair(377f, 887f - 30f),
-        "COCINA" to Pair(150f + 40f, 680f),
-        "HAB1" to Pair(568f - 40f, 654f),
-        "BAN2" to Pair(210f + 35f, 437f),
-        "HAB2" to Pair(166f + 30f, 177f - 20f),
+        "ENTRADA" to Pair(62f, 940f + 35f),
+        "SALON" to Pair(377f, 887f + 35f),
+        "COCINA" to Pair(150f - 40f, 680f),
+        "HAB1" to Pair(568f + 40f, 654f),
+        "BAN2" to Pair(210f, 437f + 35f),
+        "HAB2" to Pair(166f + 30f, 177f - 25f),
         "HAB3" to Pair(527f - 35f, 179f - 20f)
     )
 
