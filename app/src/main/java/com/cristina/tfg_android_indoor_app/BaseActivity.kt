@@ -3,6 +3,7 @@ package com.cristina.tfg_android_indoor_app
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -20,18 +21,10 @@ open class BaseActivity : AppCompatActivity() {
     protected lateinit var bottomNav: BottomNavigationView
     protected lateinit var topAppBar: MaterialToolbar
     private val roomRepo = RoomRepository()
-    private val TAG = "MAP_ACTIVITY"
-
+    private val TAG = "BASE_ACTIVITY"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        super.setContentView(R.layout.activity_base)
-
-        topAppBar = findViewById(R.id.topAppBar)
-        bottomNav = findViewById(R.id.bottomNavigation)
-
-        setupTopBar()
-        setupBottomNav()
     }
 
     override fun setContentView(layoutResID: Int) {
@@ -56,9 +49,8 @@ open class BaseActivity : AppCompatActivity() {
             val role = prefs.getString("role", "user")
             val isAdmin = role == "admin"
 
-            // Mostrar/ocultar opciones según rol
             popup.menu.findItem(R.id.nav_visits_history)?.isVisible = isAdmin
-            popup.menu.findItem(R.id.nav_edit_rooms)?.isVisible = isAdmin  // ← AÑADIDO
+            popup.menu.findItem(R.id.nav_edit_rooms)?.isVisible = isAdmin
 
             popup.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
@@ -88,7 +80,7 @@ open class BaseActivity : AppCompatActivity() {
                         startActivity(Intent(this, SettingsActivity::class.java))
                         true
                     }
-                    R.id.nav_edit_rooms -> {  // ← MOVIDO DENTRO DEL when
+                    R.id.nav_edit_rooms -> {
                         startActivity(Intent(this, EditRoomsActivity::class.java))
                         true
                     }
@@ -106,6 +98,7 @@ open class BaseActivity : AppCompatActivity() {
                     val intent = Intent(this, LoginActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
+                    finish()
                     true
                 }
                 else -> false
@@ -163,6 +156,30 @@ open class BaseActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e(TAG, "Error obteniendo ocupación: ${e.message}")
             }
+        }
+    }
+
+    fun hideBottomNavigation() {
+        if (::bottomNav.isInitialized) {
+            bottomNav.visibility = View.GONE
+        }
+    }
+
+    fun showBottomNavigation() {
+        if (::bottomNav.isInitialized) {
+            bottomNav.visibility = View.VISIBLE
+        }
+    }
+
+    fun hideTopAppBar() {
+        if (::topAppBar.isInitialized) {
+            topAppBar.visibility = View.GONE
+        }
+    }
+
+    fun showTopAppBar() {
+        if (::topAppBar.isInitialized) {
+            topAppBar.visibility = View.VISIBLE
         }
     }
 }
