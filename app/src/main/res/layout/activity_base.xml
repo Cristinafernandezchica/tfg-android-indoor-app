@@ -14,24 +14,29 @@
         android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
         app:navigationIcon="@android:drawable/ic_menu_more"
         app:title="IndoorPilot"
+        app:titleTextColor="@android:color/white"
         app:menu="@menu/top_app_bar_menu" />
 
-
-    <!-- Contenido de cada pantalla -->
+    <!-- Contenido -->
     <FrameLayout
         android:id="@+id/contentContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- Navbar inferior -->
+    <!-- Navbar inferior moderna -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?android:attr/windowBackground"
+        android:layout_height="56dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/bottom_nav_rounded"
         app:menu="@menu/bottom_nav_menu"
-        app:itemIconTint="@color/black"
-        app:itemTextColor="@color/black" />
+        app:itemIconTint="@color/bottom_nav_color"
+        app:itemTextColor="@color/bottom_nav_color"
+        app:labelVisibilityMode="labeled"
+        app:elevation="0dp" />
 
 </LinearLayout>
