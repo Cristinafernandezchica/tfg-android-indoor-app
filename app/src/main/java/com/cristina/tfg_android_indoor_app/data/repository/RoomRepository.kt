@@ -22,12 +22,7 @@ class RoomRepository {
 
     suspend fun adminGetAllRooms(token: String): Result<List<RoomDto>> {
         return try {
-            // Algunas APIs pueden necesitar el token, otras no
-            // Si tu backend NO requiere token, usa esta línea:
             val response = api.adminGetAllRooms()
-
-            // Si tu backend SÍ requiere token, usa esta otra:
-            // val response = api.adminGetAllRooms("Bearer $token")
 
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)

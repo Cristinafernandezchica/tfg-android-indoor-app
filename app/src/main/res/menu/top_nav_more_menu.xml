@@ -23,7 +23,7 @@
 
     <item
         android:id="@+id/nav_edit_rooms"
-        android:title="Editar habitaciones"
+        android:title="Editar información estancias"
         android:icon="@android:drawable/ic_menu_edit" />
 
 </menu>

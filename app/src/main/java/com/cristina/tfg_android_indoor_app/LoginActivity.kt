@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.cristina.tfg_android_indoor_app.data.repository.AuthRepository
 import kotlinx.coroutines.launch
@@ -78,13 +79,22 @@ class LoginActivity : BaseActivity() {
                         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
                         prefs.edit().putString("token", token).apply()
 
+                        var userName = ""
                         val userResult = authRepository.getCurrentUser(token)
                         userResult.onSuccess { user ->
                             prefs.edit()
                                 .putString("role", user.role)
                                 .putInt("user_id", user.id)
                                 .apply()
+                            userName = user.name
                         }
+
+                        // Toast de bienvenida - INMEDIATO
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "¡Bienvenido ${if (userName.isNotEmpty()) userName else "usuario"}!",
+                            Toast.LENGTH_SHORT
+                        ).show()
 
                         startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
                         finish()

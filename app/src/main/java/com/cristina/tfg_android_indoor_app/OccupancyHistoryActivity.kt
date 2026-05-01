@@ -1,7 +1,9 @@
 package com.cristina.tfg_android_indoor_app
 
+import android.os.Build
 import android.os.Bundle
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.cristina.tfg_android_indoor_app.R
@@ -15,6 +17,7 @@ class OccupancyHistoryActivity : AppCompatActivity() {
 
     private val repo = RoomRepository()
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_occupancy_history)

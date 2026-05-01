@@ -42,6 +42,7 @@ class MLRepository {
         }
     }
 
+    /*
     suspend fun forceStartFromEntrada(userId: Int): Result<Unit> {
         return try {
             val response = api.forceStartPosition(mapOf("user_id" to userId.toString()))
@@ -77,6 +78,7 @@ class MLRepository {
             Result.failure(e)
         }
     }
+    */
 
     suspend fun sendHeartbeat(userId: String): Result<Unit> {
         return try {
