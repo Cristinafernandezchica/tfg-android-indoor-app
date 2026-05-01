@@ -132,5 +132,11 @@
         <item name="cornerSize">50%</item>
     </style>
 
+    <style name="Widget.Modern.Card.Clickable" parent="Widget.Material3.CardView.Elevated">
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+    </style>
+
 
 </resources>

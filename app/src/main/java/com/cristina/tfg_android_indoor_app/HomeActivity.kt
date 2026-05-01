@@ -7,15 +7,18 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
-import com.cristina.tfg_android_indoor_app.training.TrainingActivity
+import androidx.lifecycle.lifecycleScope
 import com.cristina.tfg_android_indoor_app.training.TrainingAdminActivity
 import com.cristina.tfg_android_indoor_app.ui.admin.AdminVisitsActivity
 import com.cristina.tfg_android_indoor_app.ui.admin.EditRoomsActivity
 import com.cristina.tfg_android_indoor_app.ui.userlist.UserListActivity
+import com.google.android.material.chip.Chip
+import kotlinx.coroutines.launch
 
 class HomeActivity : BaseActivity() {
 
@@ -27,36 +30,89 @@ class HomeActivity : BaseActivity() {
         requestBlePermissionsIfNeeded()
         checkBluetoothEnabled()
 
-        val btnUserList = findViewById<Button>(R.id.btnUserList)
-        val btnTraining = findViewById<Button>(R.id.btnTraining)
-        val btnVisitsHistory = findViewById<Button>(R.id.btnVisitsHistory)
-        val btnEditRooms = findViewById<Button>(R.id.btnEditRooms)  // ← NUEVO
+        val tvWelcome = findViewById<TextView>(R.id.tvWelcome)
+        val tvUserName = findViewById<TextView>(R.id.tvUserName)
+        val chipRole = findViewById<Chip>(R.id.chipRole)
+        val tvStatusMessage = findViewById<TextView>(R.id.tvStatusMessage)
+        val layoutAdminButtons = findViewById<View>(R.id.layoutAdminButtons)
+
+        // Configurar cards clickeables (ahora son LinearLayout)
+        val cardMap = findViewById<LinearLayout>(R.id.cardMap)
+        val cardProfile = findViewById<LinearLayout>(R.id.cardProfile)
+        val cardUserList = findViewById<LinearLayout>(R.id.cardUserList)
+        val cardTraining = findViewById<LinearLayout>(R.id.cardTraining)
+        val cardVisits = findViewById<LinearLayout>(R.id.cardVisits)
+        val cardEditRooms = findViewById<LinearLayout>(R.id.cardEditRooms)
 
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+        val token = prefs.getString("token", "") ?: ""
         val role = prefs.getString("role", "user")
         val isAdmin = role == "admin"
 
+        // Cargar nombre del usuario
+        lifecycleScope.launch {
+            val authRepository = com.cristina.tfg_android_indoor_app.data.repository.AuthRepository()
+            val result = authRepository.getCurrentUser(token)
+            result.onSuccess { user ->
+                tvUserName.text = user.name
+                tvWelcome.text = "¡Hola, ${user.name.split(" ").first()}!"
+            }
+        }
+
+        // Configurar según rol
         if (isAdmin) {
-            btnUserList.visibility = View.VISIBLE
-            btnTraining.visibility = View.VISIBLE
-            btnVisitsHistory.visibility = View.VISIBLE
-            btnEditRooms.visibility = View.VISIBLE  // ← NUEVO
+            chipRole.text = "ADMIN"
+            chipRole.chipBackgroundColor = android.content.res.ColorStateList.valueOf(
+                android.graphics.Color.parseColor("#DC2626")
+            )
+            layoutAdminButtons.visibility = View.VISIBLE
+        } else {
+            chipRole.text = "USER"
+            chipRole.chipBackgroundColor = android.content.res.ColorStateList.valueOf(
+                android.graphics.Color.parseColor("#2563EB")
+            )
+            layoutAdminButtons.visibility = View.GONE
         }
 
-        btnUserList.setOnClickListener {
-            startActivity(Intent(this, UserListActivity::class.java))
+        // Verificar Bluetooth
+        updateBluetoothStatus(tvStatusMessage)
+
+        // Listeners
+        cardMap.setOnClickListener {
+            startActivity(Intent(this, MapActivity::class.java))
         }
 
-        btnTraining.setOnClickListener {
-            startActivity(Intent(this, TrainingAdminActivity::class.java))
+        cardProfile.setOnClickListener {
+            startActivity(Intent(this, ProfileActivity::class.java))
         }
 
-        btnVisitsHistory.setOnClickListener {
-            startActivity(Intent(this, AdminVisitsActivity::class.java))
-        }
+        if (isAdmin) {
+            cardUserList.setOnClickListener {
+                startActivity(Intent(this, UserListActivity::class.java))
+            }
 
-        btnEditRooms.setOnClickListener {
-            startActivity(Intent(this, EditRoomsActivity::class.java))
+            cardTraining.setOnClickListener {
+                startActivity(Intent(this, TrainingAdminActivity::class.java))
+            }
+
+            cardVisits.setOnClickListener {
+                startActivity(Intent(this, AdminVisitsActivity::class.java))
+            }
+
+            cardEditRooms.setOnClickListener {
+                startActivity(Intent(this, EditRoomsActivity::class.java))
+            }
+        }
+    }
+
+    private fun updateBluetoothStatus(tvStatusMessage: TextView) {
+        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        if (bluetoothAdapter == null) {
+            tvStatusMessage.text = "Este dispositivo no soporta Bluetooth"
+        } else if (bluetoothAdapter.isEnabled) {
+            tvStatusMessage.text = "Bluetooth activado - Posicionamiento disponible"
+        } else {
+            tvStatusMessage.text = "Bluetooth desactivado - Actívalo para mejor experiencia"
         }
     }
 
@@ -117,6 +173,7 @@ class HomeActivity : BaseActivity() {
             val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
             if (bluetoothAdapter?.isEnabled == true) {
                 Toast.makeText(this, "Bluetooth activado", Toast.LENGTH_SHORT).show()
+                recreate()
             } else {
                 Toast.makeText(this, "La app necesita Bluetooth para funcionar correctamente", Toast.LENGTH_LONG).show()
             }
