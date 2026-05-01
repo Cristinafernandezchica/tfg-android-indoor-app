@@ -1,55 +1,319 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:padding="24dp"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?android:attr/windowBackground">
 
-    <Button
-        android:id="@+id/btnCapture"
-        android:text="Capturar muestras"
+    <!-- Toolbar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
+        app:title="Entrenamiento IA"
+        app:titleTextColor="@android:color/white"
+        app:navigationIcon="?attr/homeAsUpIndicator" />
 
-    <Button
-        android:id="@+id/btnReset"
-        android:text="Borrar entrenamiento"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:fillViewport="true">
 
-    <Button
-        android:id="@+id/btnTrain"
-        android:text="Entrenar modelo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-    <Button
-        android:id="@+id/btnReload"
-        android:text="Recargar modelos"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+            <!-- Tarjeta de información -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                android:layout_marginBottom="20dp">
 
-    <Button
-        android:id="@+id/btnStatus"
-        android:text="Ver estado"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="20dp"
+                    android:gravity="center_vertical">
 
-    <Button
-        android:id="@+id/btnTestPosition"
-        android:text="Probar posicionamiento"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"/>
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/ic_training"
+                        android:tint="?attr/colorPrimary" />
 
-    <TextView
-        android:id="@+id/tvOutput"
-        android:text=""
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"/>
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:layout_marginStart="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Entrenamiento del modelo"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="?android:attr/textColorPrimary" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Gestiona el modelo de posicionamiento"
+                            android:textSize="12sp"
+                            android:textColor="?android:attr/textColorSecondary" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Sección de captura -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Captura de datos"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary"
+                android:layout_marginBottom="12dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCapture"
+                        android:text="Capturar muestras"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/white"
+                        app:cornerRadius="12dp"
+                        app:icon="@android:drawable/ic_menu_camera"
+                        app:iconGravity="textStart"
+                        android:backgroundTint="#2196F3" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Sección de entrenamiento -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Entrenamiento"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary"
+                android:layout_marginBottom="12dp"
+                android:layout_marginTop="8dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReset"
+                        android:text="Borrar entrenamiento"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@android:drawable/ic_menu_delete"
+                        app:iconGravity="textStart"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:backgroundTint="@android:color/transparent"
+                        app:strokeColor="#F44336"
+                        app:strokeWidth="1dp"
+                        android:textColor="#F44336"
+                        app:iconTint="#F44336" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#E0E0E0"
+                        android:layout_marginVertical="12dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTrain"
+                        android:text="Entrenar modelo"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@android:drawable/ic_menu_save"
+                        app:iconGravity="textStart"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:backgroundTint="@android:color/transparent"
+                        app:strokeColor="#4CAF50"
+                        app:strokeWidth="1dp"
+                        android:textColor="#4CAF50"
+                        app:iconTint="#4CAF50" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#E0E0E0"
+                        android:layout_marginVertical="12dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnReload"
+                        android:text="Recargar modelos"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@android:drawable/ic_menu_rotate"
+                        app:iconGravity="textStart"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:backgroundTint="@android:color/transparent"
+                        app:strokeColor="#FF9800"
+                        app:strokeWidth="1dp"
+                        android:textColor="#FF9800"
+                        app:iconTint="#FF9800" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Sección de pruebas -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pruebas"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorPrimary"
+                android:layout_marginBottom="12dp"
+                android:layout_marginTop="8dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStatus"
+                        android:text="Ver estado"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@android:drawable/ic_menu_info_details"
+                        app:iconGravity="textStart"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:backgroundTint="@android:color/transparent"
+                        app:strokeColor="#9C27B0"
+                        app:strokeWidth="1dp"
+                        android:textColor="#9C27B0"
+                        app:iconTint="#9C27B0" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#E0E0E0"
+                        android:layout_marginVertical="12dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnTestPosition"
+                        android:text="Probar posicionamiento"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:textSize="14sp"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_location_24"
+                        app:iconGravity="textStart"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:backgroundTint="@android:color/transparent"
+                        app:strokeColor="#2196F3"
+                        app:strokeWidth="1dp"
+                        android:textColor="#2196F3"
+                        app:iconTint="#2196F3" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Área de salida -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Salida"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:id="@+id/tvOutput"
+                        android:text=""
+                        android:textSize="14sp"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:minHeight="80dp"
+                        android:background="#F5F5F5"
+                        android:padding="12dp"
+                        android:fontFamily="monospace"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </ScrollView>
+
 </LinearLayout>

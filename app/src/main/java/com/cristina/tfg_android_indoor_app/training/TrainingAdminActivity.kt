@@ -10,16 +10,19 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
+import com.cristina.tfg_android_indoor_app.BaseActivity
 import com.cristina.tfg_android_indoor_app.R
 import com.cristina.tfg_android_indoor_app.data.model.SensorReading
 import com.cristina.tfg_android_indoor_app.data.repository.MLRepository
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
-class TrainingAdminActivity : AppCompatActivity() {
+class TrainingAdminActivity : BaseActivity() {
 
     private val repo = MLRepository()
     private val readings = mutableMapOf<String, Int>()
@@ -27,6 +30,16 @@ class TrainingAdminActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_training_admin)
+
+        hideBottomNavigation()
+        hideTopAppBar()
+
+        val toolbar = findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener {
+            finish()
+        }
 
         val btnReset = findViewById<Button>(R.id.btnReset)
         val btnTrain = findViewById<Button>(R.id.btnTrain)
@@ -36,7 +49,6 @@ class TrainingAdminActivity : AppCompatActivity() {
         val btnCapture = findViewById<Button>(R.id.btnCapture)
         val btnTestPosition = findViewById<Button>(R.id.btnTestPosition)
 
-        // --- Botones existentes ---
         btnReset.setOnClickListener {
             lifecycleScope.launch {
                 val resp = repo.resetTraining()
@@ -50,8 +62,9 @@ class TrainingAdminActivity : AppCompatActivity() {
 
         btnTrain.setOnClickListener {
             lifecycleScope.launch {
+                tvOutput.text = "Entrenando modelo..."
                 repo.trainModel()
-                tvOutput.text = "Modelo entrenado"
+                tvOutput.text = "Modelo entrenado correctamente"
             }
         }
 
@@ -64,8 +77,34 @@ class TrainingAdminActivity : AppCompatActivity() {
 
         btnStatus.setOnClickListener {
             lifecycleScope.launch {
-                val status = repo.getStatus()
-                tvOutput.text = status.toString()
+                try {
+                    tvOutput.text = "Obteniendo estado..."
+                    val status = repo.getStatus()
+
+                    // El status puede ser un objeto, formatearlo bonito
+                    val formattedStatus = when (status) {
+                        is String -> {
+                            try {
+                                // Intentar parsear como JSON si es string
+                                val json = JSONObject(status)
+                                formatStatus(json)
+                            } catch (e: Exception) {
+                                status
+                            }
+                        }
+                        is Map<*, *> -> {
+                            formatStatusMap(status)
+                        }
+                        else -> {
+                            status.toString()
+                        }
+                    }
+
+                    tvOutput.text = formattedStatus
+                } catch (e: Exception) {
+                    tvOutput.text = "Error obteniendo estado: ${e.message}"
+                    e.printStackTrace()
+                }
             }
         }
 
@@ -73,7 +112,6 @@ class TrainingAdminActivity : AppCompatActivity() {
             startActivity(Intent(this, TrainingActivity::class.java))
         }
 
-        // --- NUEVO: Botón de pruebas con detect_once ---
         btnTestPosition.setOnClickListener {
             tvOutput.text = "Escaneando para posicionamiento..."
 
@@ -104,13 +142,12 @@ class TrainingAdminActivity : AppCompatActivity() {
                         else -> "test"
                     }
 
-                    // Usar detectOnce para detección inmediata
                     val result = repo.detectOnce(userId, scanList)
 
                     tvOutput.text = if (result != null && result.room != null) {
-                        "✅ Habitación: ${result.room}\n📍 Zona: ${result.zone ?: "Ninguna"}\n📊 Confianza: ${result.confidence}\n📡 Beacons: ${result.sensorsCount}"
+                        "Habitación: ${result.room}\n Zona: ${result.zone ?: "Ninguna"}\n Confianza: ${result.confidence}\n Beacons: ${result.sensorsCount}"
                     } else {
-                        "❌ No se pudo detectar la habitación\n${result?.let { "Confianza: ${it.confidence}" } ?: ""}"
+                        "No se pudo detectar la habitación\n${result?.let { "Confianza: ${it.confidence}" } ?: ""}"
                     }
                 }
 
@@ -118,10 +155,44 @@ class TrainingAdminActivity : AppCompatActivity() {
         }
     }
 
-    // -----------------------------
-    // ESCANEO BLE
-    // -----------------------------
+    private fun formatStatus(json: JSONObject): String {
+        val sb = StringBuilder()
+        sb.append("ESTADO DEL SISTEMA\n")
+        sb.append("═".repeat(30))
+        sb.append("\n")
 
+        val keys = json.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            val value = json.get(key)
+            when (key) {
+                "model_loaded" -> sb.append("Modelo cargado: ${if (value == true) "Sí" else "No"}\n")
+                "samples_count" -> sb.append("Muestras: $value\n")
+                "last_training" -> sb.append("Último entrenamiento: $value\n")
+                else -> sb.append("$key: $value\n")
+            }
+        }
+        return sb.toString()
+    }
+
+    private fun formatStatusMap(map: Map<*, *>): String {
+        val sb = StringBuilder()
+        sb.append("ESTADO DEL SISTEMA\n")
+        sb.append("═".repeat(30))
+        sb.append("\n")
+
+        for ((key, value) in map) {
+            when (key) {
+                "model_loaded" -> sb.append("Modelo cargado: ${if (value == true) "Sí" else "No"}\n")
+                "samples_count" -> sb.append("Muestras: $value\n")
+                "last_training" -> sb.append("Último entrenamiento: $value\n")
+                else -> sb.append("$key: $value\n")
+            }
+        }
+        return sb.toString()
+    }
+
+    // ESCANEO BLE
     private fun canStartScan(): Boolean {
         if (!hasBlePermissions()) return false
 

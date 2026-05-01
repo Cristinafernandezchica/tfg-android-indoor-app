@@ -26,6 +26,13 @@ interface MLApi {
     @POST("sensors/detect_once")
     suspend fun detectOnce(@Body body: UpdatePositionRequest): Response<DetectOnceResponse>
 
+    @GET("sensors/ml/status")
+    suspend fun getStatus(): Response<Map<String, Any>>
+
+    @POST("sensors/ml/heartbeat")
+    suspend fun sendHeartbeat(@Body request: Map<String, String>): Response<Unit>
+
+    /*
     @POST("position/force_start")
     suspend fun forceStartPosition(
         @Body body: Map<String, String>
@@ -40,4 +47,6 @@ interface MLApi {
     suspend fun getPositionStatus(
         @Path("user_id") userId: String
     ): Response<Map<String, Any>>
+    */
+
 }

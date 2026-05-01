@@ -9,8 +9,11 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.View
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
@@ -19,11 +22,14 @@ import com.cristina.tfg_android_indoor_app.data.model.SensorReading
 import com.cristina.tfg_android_indoor_app.data.model.TrainingRequest
 import com.cristina.tfg_android_indoor_app.data.repository.TrainingRepository
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class TrainingActivity : AppCompatActivity() {
 
     private val repo = TrainingRepository()
     private val readings = mutableMapOf<String, Int>()
+    private val roomNameToId = mutableMapOf<String, String>()
+    private val zoneNameToId = mutableMapOf<String, String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,49 +47,69 @@ class TrainingActivity : AppCompatActivity() {
             1001
         )
 
-        val spinnerRooms = findViewById<Spinner>(R.id.spinnerRooms)
-        val spinnerZones = findViewById<Spinner>(R.id.spinnerZones)
+        // Configurar toolbar
+        val toolbar = findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener {
+            finish()
+        }
+
+        val actvRooms = findViewById<AutoCompleteTextView>(R.id.spinnerRooms)
+        val actvZones = findViewById<AutoCompleteTextView>(R.id.spinnerZones)
         val btnScan = findViewById<Button>(R.id.btnScan)
         val btnSend = findViewById<Button>(R.id.btnSend)
         val tvStatus = findViewById<TextView>(R.id.tvStatus)
+
+        // Hacer que los campos no sean editables (solo selección)
+        actvRooms.isFocusable = false
+        actvRooms.isClickable = true
+        actvRooms.keyListener = null
+
+        actvZones.isFocusable = false
+        actvZones.isClickable = true
+        actvZones.keyListener = null
 
         var lastScan: List<SensorReading> = listOf()
 
         // Cargar habitaciones
         lifecycleScope.launch {
             val rooms = repo.getRooms().body() ?: emptyList()
-            val adapter = ArrayAdapter(
-                this@TrainingActivity,
-                android.R.layout.simple_spinner_item,
-                rooms.map { it.room_id }
-            )
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            spinnerRooms.adapter = adapter
-        }
+            val roomNames = mutableListOf<String>()
 
-        // Cargar zonas según habitación
-        spinnerRooms.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(
-                parent: AdapterView<*>,
-                view: View?,
-                position: Int,
-                id: Long
-            ) {
-                val roomId = parent.getItemAtPosition(position) as String
-
-                lifecycleScope.launch {
-                    val zones = repo.getZones(roomId).body() ?: emptyList()
-                    val adapter = ArrayAdapter(
-                        this@TrainingActivity,
-                        android.R.layout.simple_spinner_item,
-                        zones.map { it.zone_id }
-                    )
-                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-                    spinnerZones.adapter = adapter
+            for (room in rooms) {
+                val displayName = room.name ?: room.room_id
+                if (displayName != null) {
+                    roomNames.add(displayName)
+                    roomNameToId[displayName] = room.room_id ?: ""
                 }
             }
 
-            override fun onNothingSelected(parent: AdapterView<*>) {}
+            val adapter = ArrayAdapter(
+                this@TrainingActivity,
+                android.R.layout.simple_dropdown_item_1line,
+                roomNames
+            )
+            actvRooms.setAdapter(adapter)
+
+            if (roomNames.isNotEmpty()) {
+                actvRooms.setText(roomNames[0], false)
+                // Cargar zonas de la primera habitación (usando lifecycleScope)
+                val firstRoomName = roomNames[0]
+                lifecycleScope.launch {
+                    loadZones(firstRoomName, actvZones)
+                }
+            }
+        }
+
+        // Cargar zonas según habitación seleccionada
+        actvRooms.setOnItemClickListener { _, _, position, _ ->
+            val selectedRoomName = actvRooms.adapter.getItem(position).toString()
+            if (selectedRoomName.isNotEmpty()) {
+                lifecycleScope.launch {
+                    loadZones(selectedRoomName, actvZones)
+                }
+            }
         }
 
         // Escanear BLE
@@ -114,43 +140,89 @@ class TrainingActivity : AppCompatActivity() {
 
         // Enviar muestra
         btnSend.setOnClickListener {
-            val room = spinnerRooms.selectedItem as String
-            val zone = spinnerZones.selectedItem as String
+            val selectedRoomName = actvRooms.text.toString()
+            val selectedZoneName = actvZones.text.toString()
 
-            val prefs = getSharedPreferences("auth", MODE_PRIVATE)
-            val userId = when (val value = prefs.all["user_id"]) {
-                is String -> value
-                is Int -> value.toString()
-                else -> "test"
+            if (selectedRoomName.isEmpty()) {
+                tvStatus.text = "Selecciona una habitación"
+                return@setOnClickListener
             }
 
-            val body = TrainingRequest(
-                userId = userId,
-                roomId = room,
-                zoneId = zone,
-                sensors = lastScan
-            )
+            if (selectedZoneName.isEmpty()) {
+                tvStatus.text = "Selecciona una zona"
+                return@setOnClickListener
+            }
+
+            if (lastScan.isEmpty()) {
+                tvStatus.text = "Primero escanea los beacons"
+                return@setOnClickListener
+            }
+
+            tvStatus.text = "Enviando muestra..."
 
             lifecycleScope.launch {
+                // Obtener room_id real desde el mapeo
+                val roomId = roomNameToId[selectedRoomName] ?: selectedRoomName
+                val zoneId = zoneNameToId[selectedZoneName] ?: selectedZoneName
+
+                val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+                val userId = when (val value = prefs.all["user_id"]) {
+                    is String -> value
+                    is Int -> value.toString()
+                    else -> "test"
+                }
+
+                val body = TrainingRequest(
+                    userId = userId,
+                    roomId = roomId,
+                    zoneId = zoneId,
+                    sensors = lastScan
+                )
+
                 val result = repo.sendTrainingData(body)
-                tvStatus.text = if (result.isSuccess) "Muestra guardada" else "Error enviando muestra"
+                tvStatus.text = if (result.isSuccess) "Muestra guardada correctamente" else "Error enviando muestra"
             }
         }
     }
 
-    // -----------------------------
-    // MANEJO ROBUSTO DE ESCANEO BLE
-    // -----------------------------
+    private suspend fun loadZones(roomName: String, actvZones: AutoCompleteTextView) {
+        val roomId = roomNameToId[roomName]
+        if (roomId.isNullOrEmpty()) return
+
+        val zones = repo.getZones(roomId).body() ?: emptyList()
+        val zoneNames = mutableListOf<String>()
+
+        zoneNameToId.clear()
+        for (zone in zones) {
+            val zoneId = zone.zone_id
+            if (zoneId != null) {
+                zoneNames.add(zoneId)
+                zoneNameToId[zoneId] = zoneId
+            }
+        }
+
+        val zoneAdapter = ArrayAdapter(
+            this@TrainingActivity,
+            android.R.layout.simple_dropdown_item_1line,
+            zoneNames
+        )
+        actvZones.setAdapter(zoneAdapter)
+
+        if (zoneNames.isNotEmpty()) {
+            actvZones.setText(zoneNames[0], false)
+        } else {
+            actvZones.setText("")
+        }
+    }
+
 
     private fun canStartScan(): Boolean {
-        // 1. Permisos
         if (!hasBlePermissions()) {
             Toast.makeText(this, "Faltan permisos BLE", Toast.LENGTH_LONG).show()
             requestBlePermissionsIfNeeded()
             return false
         }
 
-        // 2. Bluetooth activado
         val adapter = BluetoothAdapter.getDefaultAdapter()
         if (adapter == null) {
             Toast.makeText(this, "Este dispositivo no soporta Bluetooth", Toast.LENGTH_LONG).show()
@@ -161,7 +233,6 @@ class TrainingActivity : AppCompatActivity() {
             return false
         }
 
-        // 3. Ubicación activada
         val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         val gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
         val networkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
@@ -196,10 +267,8 @@ class TrainingActivity : AppCompatActivity() {
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             result ?: return
-
             val beaconData = parseBeacon(result) ?: return
             val sensorId = BeaconMap.map[beaconData] ?: return
-
             readings[sensorId] = result.rssi
         }
     }
