@@ -1,6 +1,5 @@
 package com.cristina.tfg_android_indoor_app.data.remote
 
-import RoomApi
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

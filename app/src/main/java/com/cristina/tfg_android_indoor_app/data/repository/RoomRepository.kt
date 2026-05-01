@@ -1,5 +1,6 @@
 package com.cristina.tfg_android_indoor_app.data.repository
 
+import com.cristina.tfg_android_indoor_app.data.model.VisitDataResponse
 import com.cristina.tfg_android_indoor_app.data.model.dto.RoomDto
 import com.cristina.tfg_android_indoor_app.data.remote.ApiClient
 
@@ -11,8 +12,8 @@ class RoomRepository {
 
     suspend fun getVisitsCurrent() = api.getVisitsCurrent()
 
-    suspend fun getVisitsAt(roomId: String, timestamp: String) =
-        api.getVisitsAt(roomId, timestamp)
+    suspend fun getVisitsAt(date: String): retrofit2.Response<Map<String, VisitDataResponse>> =
+        api.getVisitsAt(date)
 
     suspend fun getOccupancy() = api.getOccupancy()
 

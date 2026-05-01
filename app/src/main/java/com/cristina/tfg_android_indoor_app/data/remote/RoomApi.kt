@@ -1,5 +1,8 @@
+package com.cristina.tfg_android_indoor_app.data.remote
+
 import com.cristina.tfg_android_indoor_app.data.model.OccupancyResponse
 import com.cristina.tfg_android_indoor_app.data.model.TrainingRequest
+import com.cristina.tfg_android_indoor_app.data.model.VisitDataResponse
 import com.cristina.tfg_android_indoor_app.data.model.dto.RoomDto
 import com.cristina.tfg_android_indoor_app.data.model.dto.ZoneDto
 import retrofit2.Response
@@ -23,13 +26,12 @@ interface RoomApi {
     suspend fun sendTrainingData(@Body body: TrainingRequest): Response<Unit>
 
     @GET("rooms/visits/current")
-    suspend fun getVisitsCurrent(): Response<Map<String, Int>>
+    suspend fun getVisitsCurrent(): Response<Map<String, VisitDataResponse>>
 
     @GET("rooms/visits/at")
     suspend fun getVisitsAt(
-        @Query("room_id") roomId: String,
-        @Query("at") timestamp: String
-    ): Response<Map<String, Int>>
+        @Query("date") date: String
+    ): Response<Map<String, VisitDataResponse>>
 
     @GET("rooms/occupancy")
     suspend fun getOccupancy(): Response<Map<String, Int>>
