@@ -103,24 +103,18 @@ class MapActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_map)
 
-        // 1. INICIALIZAR TODAS LAS VISTAS
         initializeViews()
 
-        // 2. CONFIGURAR LISTENERS
         setupListeners()
 
-        // 3. CONFIGURAR MAPA Y OVERLAYS
         setupMapAndOverlays()
 
-        // 4. CONFIGURAR BOTTOM SHEET
         setupBottomSheet()
 
-        // 5. CONFIGURAR LISTENER DE ICONOS
         roomInfoOverlay.setOnRoomInfoClickListener { roomId ->
             showRoomInfoDialog(roomId)
         }
 
-        // 6. REGISTRAR RECEIVER Y CARGAR OCUPACIÓN INICIAL
         val filter = IntentFilter(BeaconScanService.ACTION_POSITION_UPDATE)
         registerReceiver(positionReceiver, filter)
 
@@ -145,14 +139,12 @@ class MapActivity : BaseActivity() {
         layoutStepNavigation = findViewById(R.id.layoutStepNavigation)
         tvStepCounter = findViewById(R.id.tvStepCounter)
 
-        // Bottom Sheet views
         bottomSheet = findViewById(R.id.bottomSheet)
         btnShowPanel = findViewById(R.id.btnShowPanel)
 
         val headerView = navigationView.getHeaderView(0)
         tvRouteProgress = headerView.findViewById(R.id.tvRouteProgress)
 
-        // Estado inicial: navegación de pasos oculta
         layoutStepNavigation.visibility = View.GONE
     }
 
@@ -213,7 +205,7 @@ class MapActivity : BaseActivity() {
         // Configurar comportamiento
         bottomSheetBehavior.peekHeight = 100 // Altura cuando está contraído
         bottomSheetBehavior.isHideable = true // Permitir ocultar completamente
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED // Estado inicial: expandido
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED // Estado inicial
 
         // Listener para cambios de estado
         bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
@@ -225,7 +217,7 @@ class MapActivity : BaseActivity() {
                         btnShowPanel.show()
                     }
                     BottomSheetBehavior.STATE_COLLAPSED -> {
-                        // Panel contraído (solo se ve el handle)
+                        // Panel contraído
                         btnShowPanel.visibility = View.GONE
                     }
                     BottomSheetBehavior.STATE_EXPANDED -> {
@@ -236,7 +228,6 @@ class MapActivity : BaseActivity() {
             }
 
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                // Animación opcional del botón flotante
                 btnShowPanel.alpha = 1 - slideOffset
             }
         })

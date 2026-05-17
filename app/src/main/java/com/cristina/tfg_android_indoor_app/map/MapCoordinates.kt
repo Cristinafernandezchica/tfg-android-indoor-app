@@ -85,8 +85,8 @@ object MapCoordinates {
     private fun pasilloCenter() = scaleCoordinates(corridorCenter.first, corridorCenter.second)
 
     /**
-     * Genera la ruta completa entre dos habitaciones
-     * Usando las combinaciones explícitas que has definido para evitar atravesar paredes.
+     * Con esto se genera la ruta completa entre dos habitaciones
+     * Usando las combinaciones explícitas que se han definido para evitar atravesar paredes.
      */
     fun generateRouteBetweenRooms(fromRoom: String, toRoom: String): List<Pair<Float, Float>> {
         // Primero intentamos la ruta directa definida
@@ -97,7 +97,7 @@ object MapCoordinates {
         val reverse = generateExplicitRoute(toRoom, fromRoom)
         if (reverse.isNotEmpty()) return reverse.reversed()
 
-        // Fallback genérico (por si añades habitaciones nuevas)
+        // Fallback genérico
         val points = mutableListOf<Pair<Float, Float>>()
 
         rc(fromRoom)?.let { points.add(it) }
@@ -115,10 +115,6 @@ object MapCoordinates {
         return points
     }
 
-    /**
-     * Rutas explícitas según las combinaciones que has descrito.
-     * Solo se llama desde generateRouteBetweenRooms.
-     */
     private fun generateExplicitRoute(fromRoom: String, toRoom: String): List<Pair<Float, Float>> {
         val p = mutableListOf<Pair<Float, Float>>()
 
@@ -352,18 +348,4 @@ object MapCoordinates {
         return allPoints
     }
 
-    // Para compatibilidad
-    fun getPixelCoordinates(poiId: String): Pair<Float, Float>? {
-        val roomId = when (poiId) {
-            "poi_57fd1fd2-fc14-47fd-b6df-e2f8589a3e7f" -> "ENTRADA"
-            "poi_5ab33651-9e9f-444e-8023-c57dce5d276d" -> "SALON"
-            "poi_fbc620c5-0578-43e1-b04b-9d9a93239d7d" -> "COCINA"
-            "poi_b9f47ce4-59d2-4015-b923-e0d3fab646ea" -> "HAB1"
-            "poi_70b24188-a590-4beb-b003-5aa9e7b44b95" -> "BAN2"
-            "poi_bedbfa50-eeca-40a4-8562-78799e66c2b3" -> "HAB2"
-            "poi_f93ff721-4606-45dc-9fcc-bf1d1d00b920" -> "HAB3"
-            else -> return null
-        }
-        return getRoomCenter(roomId)
-    }
 }

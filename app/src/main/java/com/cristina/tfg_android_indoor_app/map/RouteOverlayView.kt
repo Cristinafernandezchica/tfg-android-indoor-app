@@ -8,7 +8,6 @@ import kotlin.math.*
 
 class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
 
-    // PAINTS
     private val linePaint = Paint().apply {
         color = Color.MAGENTA
         strokeWidth = 8f
@@ -287,7 +286,7 @@ class RouteOverlayView(context: Context, attrs: AttributeSet?) : View(context, a
     }
 
     // ============================
-    // ➤ FLECHAS DE DIRECCIÓN
+    // FLECHAS DE DIRECCIÓN
     // ============================
 
     private fun drawArrow(canvas: Canvas, startX: Float, startY: Float, endX: Float, endY: Float) {

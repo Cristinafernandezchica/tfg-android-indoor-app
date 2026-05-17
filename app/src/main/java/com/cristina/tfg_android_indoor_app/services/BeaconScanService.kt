@@ -21,7 +21,6 @@ class BeaconScanService : android.app.Service() {
 
     private val repo = MLRepository()
     private val handler = Handler(Looper.getMainLooper())
-    private var isRunning = false
     private var scanRunnable: Runnable? = null
     private val readings = mutableMapOf<String, Int>()
 
@@ -189,7 +188,7 @@ class BeaconScanService : android.app.Service() {
                                 "pending",
                                 response.pending_count ?: 1
                             )
-                            Log.d("BeaconScanService", "🟡 Detectando: ${response.room} (${response.pending_count}/3)")
+                            Log.d("BeaconScanService", "Detectando: ${response.room} (${response.pending_count}/3)")
                         }
                         "confirmed", "ok" -> {
                             sendPositionBroadcast(
@@ -243,7 +242,6 @@ class BeaconScanService : android.app.Service() {
         handler.post(heartbeatRunnable!!)
     }
 
-    // Añadir este método
     private fun sendHeartbeat() {
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
         val userId = prefs.getInt("user_id", -1)

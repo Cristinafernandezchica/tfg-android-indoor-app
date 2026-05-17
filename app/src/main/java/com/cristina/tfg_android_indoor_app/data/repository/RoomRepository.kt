@@ -35,6 +35,7 @@ class RoomRepository {
         }
     }
 
+    /*
     suspend fun getRoom(roomId: String): Result<RoomDto> {
         return try {
             val response = api.getRoom(roomId)
@@ -47,6 +48,8 @@ class RoomRepository {
             Result.failure(e)
         }
     }
+
+     */
 
     suspend fun updateRoom(token: String, roomId: String, room: RoomDto): Result<RoomDto> {
         return try {

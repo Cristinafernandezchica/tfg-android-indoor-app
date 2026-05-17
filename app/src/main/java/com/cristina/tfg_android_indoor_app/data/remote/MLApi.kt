@@ -17,8 +17,10 @@ interface MLApi {
     @POST("sensors/ml/reload_models")
     suspend fun reloadModels(): Response<Unit>
 
+    /*
     @POST("sensors/ml/status")
     suspend fun getTrainingStatus(): List<Any>
+    */
 
     @POST("sensors/update_position")
     suspend fun updatePosition(@Body body: UpdatePositionRequest): PositionResponse
@@ -29,10 +31,10 @@ interface MLApi {
     @GET("sensors/ml/status")
     suspend fun getStatus(): Response<Map<String, Any>>
 
+    /*
     @POST("sensors/ml/heartbeat")
     suspend fun sendHeartbeat(@Body request: Map<String, String>): Response<Unit>
 
-    /*
     @POST("position/force_start")
     suspend fun forceStartPosition(
         @Body body: Map<String, String>
